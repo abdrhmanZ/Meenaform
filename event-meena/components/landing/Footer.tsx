@@ -14,16 +14,14 @@ export default function Footer() {
       { name: "القوالب", href: "/dashboard/events/templates" },
     ],
     company: [
-      { name: "من نحن", href: "#about" },
+      { name: "من نحن", href: "/about" },
       { name: "المدونة", href: "#blog" },
-      { name: "الوظائف", href: "#careers" },
-      { name: "اتصل بنا", href: "#contact" },
     ],
     legal: [
-      { name: "الشروط والأحكام", href: "#terms" },
-      { name: "سياسة الخصوصية", href: "#privacy" },
-      { name: "سياسة الاستخدام", href: "#usage" },
-      { name: "الأسئلة الشائعة", href: "#faq" },
+      { name: "الشروط والأحكام", href: "/legal#terms" },
+      { name: "سياسة الخصوصية", href: "/legal#privacy" },
+      { name: "سياسة الاستخدام", href: "/legal#usage" },
+      { name: "الأسئلة الشائعة", href: "/legal#faq" },
     ],
   };
 
@@ -52,8 +50,8 @@ export default function Footer() {
               مينا <span className="text-[#1a56db]">إيفنت</span>
             </span>
           </Link>
-          <p className="text-gray-400 text-sm">
-            هذه المنصه تقوم بمساعدة المستخدمين لي انشاء احداث بمختلف انواعها استبيان تابعه لي شركة مينا لتقنية المعلومات
+          <p className="text-gray-400 text-sm leading-relaxed">
+            منصة سعودية متكاملة لإنشاء الأحداث التفاعلية والاستبيانات والاختبارات بكل سهولة واحترافية. منتج من شركة مينا للمعلومات التقنية.
           </p>
         </div>
 

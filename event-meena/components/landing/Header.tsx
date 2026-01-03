@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
@@ -25,11 +26,15 @@ export default function Header() {
     router.push("/");
   };
 
+  // تحديد ما إذا كنا في الصفحة الرئيسية أم لا
+  const isHomePage = pathname === "/";
+
+  // إنشاء الروابط بناءً على الصفحة الحالية
   const navigation = [
-    { name: "الرئيسية", href: "#home" },
-    { name: "المميزات", href: "#features" },
-    { name: "كيف يعمل", href: "#how-it-works" },
-    { name: "من نحن", href: "#about" },
+    { name: "الرئيسية", href: isHomePage ? "#home" : "/#home" },
+    { name: "المميزات", href: isHomePage ? "#features" : "/#features" },
+    { name: "كيف يعمل", href: isHomePage ? "#how-it-works" : "/#how-it-works" },
+    { name: "من نحن", href: "/about" },
   ];
 
   return (
