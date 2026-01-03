@@ -47,10 +47,10 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
-    
+
     try {
       await login(data);
-      router.push("/dashboard");
+      router.push("/");
     } catch (error) {
       // الخطأ يتم التعامل معه في Store
       console.error("Login error:", error);
