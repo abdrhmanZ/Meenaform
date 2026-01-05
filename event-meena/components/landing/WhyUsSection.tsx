@@ -1,12 +1,12 @@
 "use client";
 
-import { 
-  Globe, 
-  Languages, 
-  Rocket, 
-  Shield, 
-  FileText, 
-  HeadphonesIcon,
+import {
+  Globe,
+  PenTool,
+  Video,
+  FileText,
+  Table,
+  BarChart3,
   CheckCircle2,
   XCircle,
   Sparkles
@@ -14,49 +14,49 @@ import {
 
 const advantages = [
   {
-    icon: Languages,
-    title: "عربي 100%",
-    description: "واجهة مستخدم عربية بالكامل مصممة من اليمين لليسار، بدون ترجمة آلية أو حلول وسط.",
-    highlight: true,
-  },
-  {
     icon: Globe,
-    title: "الأولى في الشرق الأوسط",
-    description: "المنصة العربية الأولى المتخصصة في إنشاء الأحداث التفاعلية والاستبيانات الاحترافية.",
+    title: "منصة عربية 100%",
+    description: "المنصة العربية الأولى في الشرق الأوسط المتخصصة في إنشاء الأحداث التفاعلية. واجهة أصلية من اليمين لليسار، وليست ترجمة.",
     highlight: true,
   },
   {
-    icon: Rocket,
-    title: "سهولة فائقة",
-    description: "واجهة بديهية مصممة للمستخدم العربي. أنشئ حدثك في دقائق بدون أي خبرة تقنية.",
+    icon: PenTool,
+    title: "التوقيع الإلكتروني",
+    description: "أضف خانة توقيع إلكتروني لجمع توقيعات المشاركين مباشرة على الاستبيان أو النموذج.",
+    highlight: true,
+  },
+  {
+    icon: Video,
+    title: "رفع الوسائط المتعددة",
+    description: "اسمح للمشاركين برفع صور، فيديوهات، وملفات PDF مع دعم كامل للسحب والإفلات.",
+    highlight: false,
+  },
+  {
+    icon: Table,
+    title: "جداول تفاعلية",
+    description: "أنشئ جداول بيانات تفاعلية عادية أو حسابية يملأها المشاركون بسهولة.",
     highlight: false,
   },
   {
     icon: FileText,
-    title: "تقارير PDF عربية",
-    description: "صدّر تقاريرك بصيغة PDF احترافية مع دعم كامل للغة العربية والتنسيق من اليمين لليسار.",
+    title: "تقارير PDF احترافية",
+    description: "صدّر النتائج كتقارير PDF مخصصة بشعارك وألوانك مع دعم كامل للعربية.",
     highlight: false,
   },
   {
-    icon: Shield,
-    title: "خصوصية وأمان",
-    description: "بياناتك محمية على سيرفرات آمنة مع التزام كامل بمعايير حماية البيانات.",
-    highlight: false,
-  },
-  {
-    icon: HeadphonesIcon,
-    title: "دعم فني عربي",
-    description: "فريق دعم متخصص يتحدث لغتك ويفهم احتياجاتك. مساعدة فورية عند الحاجة.",
+    icon: BarChart3,
+    title: "تحليلات فورية",
+    description: "تابع الردود لحظياً مع رسوم بيانية تفاعلية وإحصائيات تفصيلية.",
     highlight: false,
   },
 ];
 
 const comparison = [
-  { feature: "واجهة عربية أصلية", us: true, them: false },
-  { feature: "تصميم من اليمين لليسار", us: true, them: false },
-  { feature: "تقارير PDF بالعربي", us: true, them: false },
-  { feature: "دعم فني بالعربي", us: true, them: false },
-  { feature: "قوالب مخصصة للسوق العربي", us: true, them: false },
+  { feature: "واجهة عربية أصلية (ليست ترجمة)", us: true, them: false },
+  { feature: "التوقيع الإلكتروني", us: true, them: false },
+  { feature: "رفع فيديوهات وصور", us: true, them: false },
+  { feature: "جداول تفاعلية وحسابية", us: true, them: false },
+  { feature: "تقارير PDF مخصصة بالعربي", us: true, them: false },
   { feature: "تحليلات وإحصائيات", us: true, them: true },
 ];
 

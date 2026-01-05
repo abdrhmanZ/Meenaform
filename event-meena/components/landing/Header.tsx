@@ -34,6 +34,7 @@ export default function Header() {
     { name: "الرئيسية", href: isHomePage ? "#home" : "/#home" },
     { name: "المميزات", href: isHomePage ? "#features" : "/#features" },
     { name: "كيف يعمل", href: isHomePage ? "#how-it-works" : "/#how-it-works" },
+    { name: "لماذا نحن", href: isHomePage ? "#why-us" : "/#why-us" },
     { name: "من نحن", href: "/about" },
   ];
 
