@@ -1,6 +1,7 @@
 import Header from "@/components/landing/Header";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
+import WhyUsSection from "@/components/landing/WhyUsSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import Footer from "@/components/landing/Footer";
 
@@ -11,6 +12,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <FeaturesSection />
+        <WhyUsSection />
         <HowItWorksSection />
       </main>
       <Footer />
