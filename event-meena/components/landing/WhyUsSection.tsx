@@ -26,6 +26,13 @@ const advantages = [
     highlight: true,
   },
   {
+    icon: FileText,
+    title: "تصدير PDF احترافي",
+    description: "صدّر نتائج أحداثك في PDF عصري بثلاث أنواع: جدول لكل مشارك، جدول يحتوي كل المشاركين، أو تحرير تفاعلي مع قوالب وأشكال جميلة تختارها بنفسك.",
+    highlight: true,
+    badge: "الميزة الأقوى",
+  },
+  {
     icon: Video,
     title: "رفع الوسائط المتعددة",
     description: "اسمح للمشاركين برفع صور، فيديوهات، وملفات PDF مع دعم كامل للسحب والإفلات.",
@@ -35,12 +42,6 @@ const advantages = [
     icon: Table,
     title: "جداول تفاعلية",
     description: "أنشئ جداول بيانات تفاعلية عادية أو حسابية يملأها المشاركون بسهولة.",
-    highlight: false,
-  },
-  {
-    icon: FileText,
-    title: "تقارير PDF احترافية",
-    description: "صدّر النتائج كتقارير PDF مخصصة بشعارك وألوانك مع دعم كامل للعربية.",
     highlight: false,
   },
   {
@@ -56,7 +57,7 @@ const comparison = [
   { feature: "التوقيع الإلكتروني", us: true, them: false },
   { feature: "رفع فيديوهات وصور", us: true, them: false },
   { feature: "جداول تفاعلية وحسابية", us: true, them: false },
-  { feature: "تقارير PDF مخصصة بالعربي", us: true, them: false },
+  { feature: "محرر تقارير PDF تفاعلي", us: true, them: false },
   { feature: "تحليلات وإحصائيات", us: true, them: true },
 ];
 
@@ -88,14 +89,16 @@ export default function WhyUsSection() {
               <div
                 key={index}
                 className={`relative p-6 rounded-2xl border transition-all duration-300 hover:shadow-md ${
-                  item.highlight 
-                    ? "bg-gradient-to-br from-[#1a56db]/5 to-[#1a56db]/10 border-[#1a56db]/20 hover:border-[#1a56db]/40" 
+                  item.highlight
+                    ? "bg-gradient-to-br from-[#1a56db]/5 to-[#1a56db]/10 border-[#1a56db]/20 hover:border-[#1a56db]/40"
                     : "bg-white border-gray-200 hover:border-gray-300"
                 }`}
               >
                 {item.highlight && (
-                  <div className="absolute -top-3 right-4 px-3 py-1 bg-[#1a56db] text-white text-xs font-bold rounded-full">
-                    مميز
+                  <div className={`absolute -top-3 right-4 px-3 py-1 text-white text-xs font-bold rounded-full ${
+                    item.badge ? "bg-gradient-to-r from-[#1a56db] to-[#7c3aed]" : "bg-[#1a56db]"
+                  }`}>
+                    {item.badge || "مميز"}
                   </div>
                 )}
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
@@ -124,8 +127,8 @@ export default function WhyUsSection() {
             </div>
             {/* Rows */}
             {comparison.map((row, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`grid grid-cols-3 ${index !== comparison.length - 1 ? "border-b border-gray-100" : ""}`}
               >
                 <div className="p-4 text-gray-700 text-sm">{row.feature}</div>
