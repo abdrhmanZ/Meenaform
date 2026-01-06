@@ -110,84 +110,101 @@ public class EventService : IEventService
 
     /// <summary>
     /// إنشاء حدث كامل مع أقسامه ومكوناته في طلب واحد
+    /// محسّن: يستخدم SaveChanges واحد + Transaction للأداء الأفضل
     /// </summary>
     public async Task<ApiResponse<EventWithFullDetailsDto>> CreateWithSectionsAsync(Guid userId, CreateEventWithSectionsRequest request)
     {
-        // إنشاء الحدث
-        var evt = new Event
-        {
-            Title = request.Title,
-            Description = request.Description,
-            Type = request.Type,
-            Status = request.Status ?? EventStatus.Published, // يستخدم الحالة من الطلب، أو Published كافتراضي
-            UserId = userId,
-            ShareCode = await GenerateUniqueShareCode(),
-            CoverImage = request.CoverImage,
-            ThemeColor = request.ThemeColor,
-            Language = request.Language ?? "ar",
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            TimeLimitMinutes = request.TimeLimitMinutes,
-            RequireLogin = request.RequireLogin,
-            AllowAnonymous = request.AllowAnonymous,
-            MaxResponses = request.MaxResponses,
-            AllowMultipleResponses = request.AllowMultipleResponses,
-            AllowEditResponses = request.AllowEditResponses,
-            ShowResults = request.ShowResults,
-            ShowCorrectAnswers = request.ShowCorrectAnswers,
-            ShuffleQuestions = request.ShuffleQuestions,
-            ShuffleOptions = request.ShuffleOptions,
-            PassingScore = request.PassingScore,
-            ThankYouMessage = request.ThankYouMessage,
-            SuccessMessage = request.SuccessMessage,
-            GoodMessage = request.GoodMessage,
-            ImprovementMessage = request.ImprovementMessage,
-            // إعدادات الحدث الخاص
-            IsPrivate = request.IsPrivate,
-            AllowedEmailsJson = request.AllowedEmails != null && request.AllowedEmails.Count > 0
-                ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
-                : null
-        };
+        // توليد ShareCode قبل البدء
+        var shareCode = await GenerateUniqueShareCode();
 
-        await _unitOfWork.Events.AddAsync(evt);
-        await _unitOfWork.SaveChangesAsync();
+        // بدء Transaction للحماية
+        await _unitOfWork.BeginTransactionAsync();
 
-        // إنشاء الأقسام والمكونات
-        if (request.Sections != null && request.Sections.Count > 0)
+        try
         {
-            foreach (var sectionReq in request.Sections)
+            // إنشاء الحدث
+            var evt = new Event
             {
-                var section = new Section
-                {
-                    Title = sectionReq.Title,
-                    Description = sectionReq.Description,
-                    Order = sectionReq.Order,
-                    IsVisible = sectionReq.IsVisible,
-                    EventId = evt.Id
-                };
+                Title = request.Title,
+                Description = request.Description,
+                Type = request.Type,
+                Status = request.Status ?? EventStatus.Published,
+                UserId = userId,
+                ShareCode = shareCode,
+                CoverImage = request.CoverImage,
+                ThemeColor = request.ThemeColor,
+                Language = request.Language ?? "ar",
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                TimeLimitMinutes = request.TimeLimitMinutes,
+                RequireLogin = request.RequireLogin,
+                AllowAnonymous = request.AllowAnonymous,
+                MaxResponses = request.MaxResponses,
+                AllowMultipleResponses = request.AllowMultipleResponses,
+                AllowEditResponses = request.AllowEditResponses,
+                ShowResults = request.ShowResults,
+                ShowCorrectAnswers = request.ShowCorrectAnswers,
+                ShuffleQuestions = request.ShuffleQuestions,
+                ShuffleOptions = request.ShuffleOptions,
+                PassingScore = request.PassingScore,
+                ThankYouMessage = request.ThankYouMessage,
+                SuccessMessage = request.SuccessMessage,
+                GoodMessage = request.GoodMessage,
+                ImprovementMessage = request.ImprovementMessage,
+                IsPrivate = request.IsPrivate,
+                AllowedEmailsJson = request.AllowedEmails != null && request.AllowedEmails.Count > 0
+                    ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
+                    : null
+            };
 
-                await _unitOfWork.Sections.AddAsync(section);
-                await _unitOfWork.SaveChangesAsync();
-
-                // إنشاء المكونات
-                if (sectionReq.Components != null && sectionReq.Components.Count > 0)
+            // إنشاء الأقسام والمكونات باستخدام Navigation Properties
+            // EF Core سيربط الـ IDs تلقائياً عند الحفظ
+            if (request.Sections != null && request.Sections.Count > 0)
+            {
+                foreach (var sectionReq in request.Sections)
                 {
-                    foreach (var compReq in sectionReq.Components)
+                    var section = new Section
                     {
-                        var component = _mapper.Map<Component>(compReq);
-                        component.SectionId = section.Id;
-                        await _unitOfWork.Components.AddAsync(component);
+                        Title = sectionReq.Title,
+                        Description = sectionReq.Description,
+                        Order = sectionReq.Order,
+                        IsVisible = sectionReq.IsVisible
+                    };
+
+                    // إنشاء المكونات وربطها بالقسم
+                    if (sectionReq.Components != null && sectionReq.Components.Count > 0)
+                    {
+                        foreach (var compReq in sectionReq.Components)
+                        {
+                            var component = _mapper.Map<Component>(compReq);
+                            section.Components.Add(component);
+                        }
                     }
-                    await _unitOfWork.SaveChangesAsync();
+
+                    // ربط القسم بالحدث
+                    evt.Sections.Add(section);
                 }
             }
-        }
 
-        // جلب الحدث مع كل التفاصيل
-        var fullEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(evt.Id);
-        return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(
-            _mapper.Map<EventWithFullDetailsDto>(fullEvent),
-            "تم إنشاء الحدث بنجاح");
+            // حفظ كل شيء مرة واحدة
+            await _unitOfWork.Events.AddAsync(evt);
+            await _unitOfWork.SaveChangesAsync();
+
+            // تأكيد Transaction
+            await _unitOfWork.CommitTransactionAsync();
+
+            // جلب الحدث مع كل التفاصيل
+            var fullEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(evt.Id);
+            return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(
+                _mapper.Map<EventWithFullDetailsDto>(fullEvent),
+                "تم إنشاء الحدث بنجاح");
+        }
+        catch (Exception)
+        {
+            // إلغاء كل شيء في حالة الخطأ
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 
     public async Task<ApiResponse<EventDto>> UpdateAsync(Guid id, Guid userId, UpdateEventRequest request)
