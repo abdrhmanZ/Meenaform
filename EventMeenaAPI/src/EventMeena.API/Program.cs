@@ -123,7 +123,11 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+        b =>
+        {
+            b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+            b.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        }));
 
 // ===========================================
 // 4. Repository Registration
