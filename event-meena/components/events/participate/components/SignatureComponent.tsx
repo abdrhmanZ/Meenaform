@@ -3,7 +3,7 @@
 import { Component } from "@/types/component";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Pen, Trash2, Loader2 } from "lucide-react";
+import { Pen, Trash2 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { filesService } from "@/lib/api/services";
 
@@ -197,7 +197,7 @@ export default function SignatureComponent({
           </div>
         )}
 
-        <div className={`border-2 border-gray-300 rounded-xl overflow-hidden bg-white relative ${isUploading ? 'opacity-50' : ''}`}>
+        <div className="border-2 border-gray-300 rounded-xl overflow-hidden bg-white relative">
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
@@ -207,18 +207,9 @@ export default function SignatureComponent({
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className={`w-full touch-none ${isUploading ? 'pointer-events-none' : 'cursor-crosshair'}`}
+            className="w-full touch-none cursor-crosshair"
             style={{ height: "200px" }}
           />
-          {/* Loading Overlay */}
-          {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-              <div className="flex items-center gap-2 text-primary">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm font-medium">جاري حفظ التوقيع...</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Instructions */}

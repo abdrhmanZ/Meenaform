@@ -111,7 +111,7 @@ export default function SignupForm() {
       // دمج كود الدولة مع رقم الجوال
       const fullPhone = `${countryCode}${data.phone.replace(/^0+/, "")}`;
       await signup({ ...data, phone: fullPhone });
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       console.error("Signup error:", error);
     }

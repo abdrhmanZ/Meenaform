@@ -81,16 +81,10 @@ export default function DashboardHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-                  لوحة التحكم
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => router.push("/dashboard/settings")}
                 >
                   الإعدادات
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/")}>
-                  الصفحة الرئيسية
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

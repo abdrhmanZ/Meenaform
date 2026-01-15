@@ -50,7 +50,7 @@ export default function LoginForm() {
 
     try {
       await login(data);
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       // الخطأ يتم التعامل معه في Store
       console.error("Login error:", error);
