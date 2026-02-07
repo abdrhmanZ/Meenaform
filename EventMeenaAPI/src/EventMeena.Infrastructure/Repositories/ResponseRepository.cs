@@ -33,10 +33,11 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
     public async Task<Response?> GetByEventIdAndEmailAsync(Guid eventId, string email)
     {
+        // SQL Server default collation is case-insensitive, no need for ToLower()
         return await _dbSet
             .FirstOrDefaultAsync(r => r.EventId == eventId &&
                 r.RespondentEmail != null &&
-                r.RespondentEmail.ToLower() == email.ToLower());
+                r.RespondentEmail == email);
     }
 
     public async Task<Response?> GetByEventIdAndIpAsync(Guid eventId, string ipAddress)
@@ -52,7 +53,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
         return await _dbSet
             .FirstOrDefaultAsync(r => r.EventId == eventId &&
                 r.RespondentEmail != null &&
-                r.RespondentEmail.ToLower() == email.ToLower() &&
+                r.RespondentEmail == email &&
                 r.Status == ResponseStatus.Completed);
     }
 
@@ -89,31 +90,45 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
     public async Task<Application.DTOs.Responses.ResponseStatsDto> GetEventStatsAsync(Guid eventId)
     {
-        var responses = await _dbSet.Where(r => r.EventId == eventId).ToListAsync();
-        var completed = responses.Count(r => r.Status == ResponseStatus.Completed);
-        var inProgress = responses.Count(r => r.Status == ResponseStatus.InProgress);
-        var avgScore = responses.Where(r => r.Score.HasValue).Select(r => (double)r.Score!.Value).DefaultIfEmpty(0).Average();
-        var avgDuration = responses.Where(r => r.DurationSeconds.HasValue).Select(r => (double)r.DurationSeconds!.Value).DefaultIfEmpty(0).Average();
-        var passed = responses.Count(r => r.IsPassed == true);
-        var failed = responses.Count(r => r.IsPassed == false);
+        // SQL aggregation - يحسب كل شيء في قاعدة البيانات بدون تحميل البيانات في الذاكرة
+        var query = _dbSet.Where(r => r.EventId == eventId);
+
+        var stats = await query
+            .GroupBy(r => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Completed = g.Count(r => r.Status == ResponseStatus.Completed),
+                InProgress = g.Count(r => r.Status == ResponseStatus.InProgress),
+                AvgScore = g.Where(r => r.Score.HasValue).Average(r => (double?)r.Score) ?? 0,
+                AvgDuration = g.Where(r => r.DurationSeconds.HasValue).Average(r => (double?)r.DurationSeconds) ?? 0,
+                Passed = g.Count(r => r.IsPassed == true),
+                Failed = g.Count(r => r.IsPassed == false)
+            })
+            .FirstOrDefaultAsync();
+
+        if (stats == null)
+        {
+            return new Application.DTOs.Responses.ResponseStatsDto();
+        }
 
         return new Application.DTOs.Responses.ResponseStatsDto
         {
-            TotalResponses = responses.Count,
-            CompletedResponses = completed,
-            InProgressResponses = inProgress,
-            AverageScore = avgScore,
-            AverageDurationSeconds = avgDuration,
-            PassedCount = passed,
-            FailedCount = failed,
-            PassRate = completed > 0 ? (double)passed / completed * 100 : 0
+            TotalResponses = stats.Total,
+            CompletedResponses = stats.Completed,
+            InProgressResponses = stats.InProgress,
+            AverageScore = stats.AvgScore,
+            AverageDurationSeconds = stats.AvgDuration,
+            PassedCount = stats.Passed,
+            FailedCount = stats.Failed,
+            PassRate = stats.Completed > 0 ? (double)stats.Passed / stats.Completed * 100 : 0
         };
     }
 
     public async Task DeleteByEventIdAsync(Guid eventId)
     {
-        var responses = await _dbSet.Where(r => r.EventId == eventId).ToListAsync();
-        _dbSet.RemoveRange(responses);
+        // حذف مباشر في SQL بدون تحميل البيانات في الذاكرة
+        await _dbSet.Where(r => r.EventId == eventId).ExecuteDeleteAsync();
     }
 
     public async Task<Dictionary<DateTime, int>> GetDailyResponseCountsAsync(Guid userId, DateTime startDate, DateTime endDate)
@@ -157,10 +172,45 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
                 .ThenInclude(e => e.Sections)
                     .ThenInclude(s => s.Components)
             .Where(r => r.RespondentEmail != null &&
-                       r.RespondentEmail.ToLower() == email.ToLower() &&
+                       r.RespondentEmail == email &&
                        r.Status == ResponseStatus.Completed)
             .OrderByDescending(r => r.CompletedAt ?? r.CreatedAt)
             .ToListAsync();
+    }
+
+    public async Task<(IReadOnlyList<Response> Items, int TotalCount)> GetByEventIdPagedAsync(Guid eventId, int pageNumber, int pageSize)
+    {
+        var totalCount = await _dbSet.CountAsync(r => r.EventId == eventId);
+
+        var items = await _dbSet
+            .Where(r => r.EventId == eventId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<Dictionary<Guid, double>> GetBulkCompletionRatesAsync(IEnumerable<Guid> eventIds)
+    {
+        var eventIdList = eventIds.ToList();
+
+        var stats = await _dbSet
+            .Where(r => eventIdList.Contains(r.EventId))
+            .GroupBy(r => r.EventId)
+            .Select(g => new
+            {
+                EventId = g.Key,
+                Total = g.Count(),
+                Completed = g.Count(r => r.Status == ResponseStatus.Completed)
+            })
+            .ToListAsync();
+
+        return stats.ToDictionary(
+            s => s.EventId,
+            s => s.Total > 0 ? (double)s.Completed / s.Total * 100 : 0
+        );
     }
 }
 

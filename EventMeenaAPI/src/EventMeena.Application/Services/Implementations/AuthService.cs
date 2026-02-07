@@ -154,19 +154,7 @@ public class AuthService : IAuthService
         // إرسال البريد الإلكتروني
         var resetLink = $"{_frontendUrl}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={resetToken}";
 
-        // [DEV] طباعة الرابط في Terminal للاختبار المحلي
-        Console.WriteLine($"🔗 [DEV] Reset Link: {resetLink}");
-
-        var emailSent = await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetLink);
-
-        if (emailSent)
-        {
-            Console.WriteLine($"✅ Email actually sent to {user.Email}");
-        }
-        else
-        {
-            Console.WriteLine($"❌ Email FAILED to send to {user.Email}");
-        }
+        await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetLink);
 
         return ApiResponse.SuccessResponse("إذا كان البريد الإلكتروني مسجلاً، ستصلك رسالة لإعادة تعيين كلمة المرور");
     }

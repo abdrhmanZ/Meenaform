@@ -21,38 +21,46 @@ public class UnitOfWork : IUnitOfWork
     private IResponseRepository? _responses;
     private IUserTemplateRepository? _userTemplates;
     private ISendHistoryRepository? _sendHistories;
+    private ISignatureFieldRepository? _signatureFields;
+    private IDocumentSignatureRepository? _documentSignatures;
 
     public UnitOfWork(ApplicationDbContext context)
     {
         _context = context;
     }
 
-    public IUserRepository Users => 
+    public IUserRepository Users =>
         _users ??= new UserRepository(_context);
 
-    public IEventRepository Events => 
+    public IEventRepository Events =>
         _events ??= new EventRepository(_context);
 
-    public ISectionRepository Sections => 
+    public ISectionRepository Sections =>
         _sections ??= new SectionRepository(_context);
 
-    public IComponentRepository Components => 
+    public IComponentRepository Components =>
         _components ??= new ComponentRepository(_context);
 
-    public IContactRepository Contacts => 
+    public IContactRepository Contacts =>
         _contacts ??= new ContactRepository(_context);
 
-    public IGroupRepository Groups => 
+    public IGroupRepository Groups =>
         _groups ??= new GroupRepository(_context);
 
-    public IResponseRepository Responses => 
+    public IResponseRepository Responses =>
         _responses ??= new ResponseRepository(_context);
 
-    public IUserTemplateRepository UserTemplates => 
+    public IUserTemplateRepository UserTemplates =>
         _userTemplates ??= new UserTemplateRepository(_context);
 
-    public ISendHistoryRepository SendHistories => 
+    public ISendHistoryRepository SendHistories =>
         _sendHistories ??= new SendHistoryRepository(_context);
+
+    public ISignatureFieldRepository SignatureFields =>
+        _signatureFields ??= new SignatureFieldRepository(_context);
+
+    public IDocumentSignatureRepository DocumentSignatures =>
+        _documentSignatures ??= new DocumentSignatureRepository(_context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

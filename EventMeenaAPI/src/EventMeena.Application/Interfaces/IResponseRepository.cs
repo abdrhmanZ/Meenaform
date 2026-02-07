@@ -35,5 +35,15 @@ public interface IResponseRepository : IGenericRepository<Response>
     /// الحصول على جميع الردود لإيميل معين مع تفاصيل الحدث
     /// </summary>
     Task<IReadOnlyList<Response>> GetByRespondentEmailWithEventAsync(string email);
+
+    /// <summary>
+    /// الحصول على الردود مع pagination على مستوى قاعدة البيانات
+    /// </summary>
+    Task<(IReadOnlyList<Response> Items, int TotalCount)> GetByEventIdPagedAsync(Guid eventId, int pageNumber, int pageSize);
+
+    /// <summary>
+    /// الحصول على متوسط نسبة الإكمال لعدة أحداث دفعة واحدة
+    /// </summary>
+    Task<Dictionary<Guid, double>> GetBulkCompletionRatesAsync(IEnumerable<Guid> eventIds);
 }
 

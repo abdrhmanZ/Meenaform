@@ -42,16 +42,12 @@ public class ContactService : IContactService
 
     public async Task<ApiResponse<PagedResult<ContactDto>>> GetUserContactsAsync(Guid userId, PaginationParams pagination)
     {
-        var contacts = await _unitOfWork.Contacts.GetByUserIdAsync(userId);
-        var totalCount = contacts.Count;
-        var pagedContacts = contacts
-            .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-            .Take(pagination.PageSize)
-            .ToList();
+        // Database-level pagination - يجلب فقط الصفحة المطلوبة من قاعدة البيانات
+        var (contacts, totalCount) = await _unitOfWork.Contacts.GetByUserIdPagedAsync(userId, pagination.PageNumber, pagination.PageSize);
 
         return ApiResponse<PagedResult<ContactDto>>.SuccessResponse(new PagedResult<ContactDto>
         {
-            Items = _mapper.Map<List<ContactDto>>(pagedContacts),
+            Items = _mapper.Map<List<ContactDto>>(contacts),
             TotalCount = totalCount,
             PageNumber = pagination.PageNumber,
             PageSize = pagination.PageSize
@@ -128,7 +124,7 @@ public class ContactService : IContactService
 
         await _unitOfWork.SaveChangesAsync();
         return ApiResponse<List<ContactDto>>.SuccessResponse(
-            _mapper.Map<List<ContactDto>>(createdContacts), 
+            _mapper.Map<List<ContactDto>>(createdContacts),
             $"تم استيراد {createdContacts.Count} جهة اتصال بنجاح");
     }
 }

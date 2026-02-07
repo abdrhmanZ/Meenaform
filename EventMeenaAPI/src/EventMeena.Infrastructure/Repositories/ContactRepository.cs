@@ -46,9 +46,10 @@ public class ContactRepository : GenericRepository<Contact>, IContactRepository
 
     public async Task<Contact?> GetByEmailAndUserIdAsync(string email, Guid userId)
     {
+        // SQL Server default collation is case-insensitive, no need for ToLower()
         return await _dbSet
             .FirstOrDefaultAsync(c => c.Email != null &&
-                c.Email.ToLower() == email.ToLower() &&
+                c.Email == email &&
                 c.UserId == userId);
     }
 
@@ -56,21 +57,36 @@ public class ContactRepository : GenericRepository<Contact>, IContactRepository
     {
         return await _dbSet
             .AnyAsync(c => c.Email != null &&
-                c.Email.ToLower() == email.ToLower() &&
+                c.Email == email &&
                 c.UserId == userId);
     }
 
     public async Task<IReadOnlyList<Contact>> SearchAsync(Guid userId, string searchTerm)
     {
-        var lowerSearchTerm = searchTerm.ToLower();
         return await _dbSet
             .Where(c => c.UserId == userId && c.IsActive &&
-                (c.Name.ToLower().Contains(lowerSearchTerm) ||
-                 (c.Email != null && c.Email.ToLower().Contains(lowerSearchTerm)) ||
+                (c.Name.Contains(searchTerm) ||
+                 (c.Email != null && c.Email.Contains(searchTerm)) ||
                  (c.Phone != null && c.Phone.Contains(searchTerm)) ||
-                 (c.Company != null && c.Company.ToLower().Contains(lowerSearchTerm))))
+                 (c.Company != null && c.Company.Contains(searchTerm))))
             .OrderBy(c => c.Name)
             .ToListAsync();
+    }
+
+    public async Task<(IReadOnlyList<Contact> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize)
+    {
+        var totalCount = await _dbSet.CountAsync(c => c.UserId == userId && c.IsActive);
+
+        var items = await _dbSet
+            .Include(c => c.ContactGroups)
+                .ThenInclude(cg => cg.Group)
+            .Where(c => c.UserId == userId && c.IsActive)
+            .OrderBy(c => c.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 }
 

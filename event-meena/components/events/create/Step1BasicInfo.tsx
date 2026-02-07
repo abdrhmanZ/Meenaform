@@ -1,6 +1,7 @@
 "use client";
 
 import { useEventBuilderStore } from "@/store/eventBuilderStore";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, HelpCircle, ClipboardList, Target, ArrowRight } from "lucide-react";
+import { FileText, HelpCircle, ClipboardList, Target, ArrowRight, PenTool, ExternalLink } from "lucide-react";
 import { EventType } from "@/types/event";
 import Link from "next/link";
 
@@ -49,9 +50,22 @@ const eventTypes = [
     color: "text-orange-600",
     bgColor: "bg-orange-50",
   },
+  {
+    value: "document_signing" as EventType,
+    label: "توقيع وثيقة",
+    description: "رفع وثيقة PDF للتوقيع الإلكتروني",
+    icon: PenTool,
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+    isSpecialBuilder: true, // Uses a different builder page
+  },
 ];
 
+// Types that use a special builder page
+const specialBuilderTypes: EventType[] = ["document_signing"];
+
 export default function Step1BasicInfo() {
+  const router = useRouter();
   const {
     title,
     description,
@@ -64,6 +78,15 @@ export default function Step1BasicInfo() {
   } = useEventBuilderStore();
 
   const selectedType = eventTypes.find((t) => t.value === type);
+
+  const handleTypeSelect = (eventType: EventType) => {
+    // If it's a special builder type, redirect to its dedicated page
+    if (specialBuilderTypes.includes(eventType)) {
+      router.push(`/dashboard/events/new/${eventType.replace("_", "-")}`);
+      return;
+    }
+    setType(eventType);
+  };
 
   return (
     <div className="space-y-8">
@@ -120,11 +143,12 @@ export default function Step1BasicInfo() {
           {eventTypes.map((eventType) => {
             const Icon = eventType.icon;
             const isSelected = type === eventType.value;
+            const isSpecial = "isSpecialBuilder" in eventType && eventType.isSpecialBuilder;
 
             return (
               <div
                 key={eventType.value}
-                onClick={() => setType(eventType.value)}
+                onClick={() => handleTypeSelect(eventType.value)}
                 className={`
                   p-4 rounded-lg border-2 cursor-pointer transition-all
                   ${
@@ -143,13 +167,18 @@ export default function Step1BasicInfo() {
                     <Icon className={`w-6 h-6 ${eventType.color}`} />
                   </div>
                   <div className="flex-1">
-                    <h3
-                      className={`font-semibold mb-1 ${
-                        isSelected ? "text-primary" : "text-gray-900"
-                      }`}
-                    >
-                      {eventType.label}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3
+                        className={`font-semibold mb-1 ${
+                          isSelected ? "text-primary" : "text-gray-900"
+                        }`}
+                      >
+                        {eventType.label}
+                      </h3>
+                      {isSpecial && (
+                        <ExternalLink className="w-3 h-3 text-gray-400" />
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600">
                       {eventType.description}
                     </p>

@@ -41,16 +41,12 @@ public class ResponseService : IResponseService
         if (evt == null || evt.UserId != userId)
             return ApiResponse<PagedResult<ResponseDto>>.FailureResponse("الحدث غير موجود");
 
-        var responses = await _unitOfWork.Responses.GetByEventIdAsync(eventId);
-        var totalCount = responses.Count;
-        var pagedResponses = responses
-            .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-            .Take(pagination.PageSize)
-            .ToList();
+        // Database-level pagination - يجلب فقط الصفحة المطلوبة من قاعدة البيانات
+        var (responses, totalCount) = await _unitOfWork.Responses.GetByEventIdPagedAsync(eventId, pagination.PageNumber, pagination.PageSize);
 
         return ApiResponse<PagedResult<ResponseDto>>.SuccessResponse(new PagedResult<ResponseDto>
         {
-            Items = _mapper.Map<List<ResponseDto>>(pagedResponses),
+            Items = _mapper.Map<List<ResponseDto>>(responses),
             TotalCount = totalCount,
             PageNumber = pagination.PageNumber,
             PageSize = pagination.PageSize
@@ -144,20 +140,7 @@ public class ResponseService : IResponseService
         if (response == null || response.Status != ResponseStatus.InProgress)
             return ApiResponse<ResponseDto>.FailureResponse("الاستجابة غير صالحة");
 
-        // DEBUG: Log incoming data
-        Console.WriteLine("========== DEBUG: CompleteResponseAsync ==========");
-        Console.WriteLine($"ResponseId: {responseId}");
-        Console.WriteLine($"FinalAnswers Count: {request.FinalAnswers?.Count ?? 0}");
-        if (request.FinalAnswers != null)
-        {
-            foreach (var ans in request.FinalAnswers)
-            {
-                Console.WriteLine($"  ComponentId: {ans.ComponentId}");
-                Console.WriteLine($"  AnswerJson: {ans.AnswerJson}");
-                Console.WriteLine("  ---");
-            }
-        }
-        Console.WriteLine($"Existing AnswersJson BEFORE: {response.AnswersJson}");
+
 
         // Add final answers if provided
         if (request.FinalAnswers != null && request.FinalAnswers.Any())
@@ -172,9 +155,6 @@ public class ResponseService : IResponseService
             }
             response.AnswersJson = System.Text.Json.JsonSerializer.Serialize(existingAnswers);
         }
-
-        Console.WriteLine($"AnswersJson AFTER: {response.AnswersJson}");
-        Console.WriteLine("==================================================");
 
         response.Status = ResponseStatus.Completed;
         response.CompletedAt = DateTime.UtcNow;

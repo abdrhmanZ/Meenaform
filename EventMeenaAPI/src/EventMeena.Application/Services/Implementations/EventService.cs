@@ -64,17 +64,12 @@ public class EventService : IEventService
 
     public async Task<ApiResponse<PagedResult<EventListItemDto>>> GetUserEventsAsync(Guid userId, PaginationParams pagination)
     {
-        // استخدام WithCounts للحصول على عدد الأقسام والمكونات
-        var events = await _unitOfWork.Events.GetByUserIdWithCountsAsync(userId);
-        var totalCount = events.Count;
-        var pagedEvents = events
-            .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-            .Take(pagination.PageSize)
-            .ToList();
+        // Database-level pagination - يجلب فقط الصفحة المطلوبة من قاعدة البيانات
+        var (events, totalCount) = await _unitOfWork.Events.GetByUserIdPagedAsync(userId, pagination.PageNumber, pagination.PageSize);
 
         return ApiResponse<PagedResult<EventListItemDto>>.SuccessResponse(new PagedResult<EventListItemDto>
         {
-            Items = _mapper.Map<List<EventListItemDto>>(pagedEvents),
+            Items = _mapper.Map<List<EventListItemDto>>(events),
             TotalCount = totalCount,
             PageNumber = pagination.PageNumber,
             PageSize = pagination.PageSize
@@ -193,10 +188,10 @@ public class EventService : IEventService
             // تأكيد Transaction
             await _unitOfWork.CommitTransactionAsync();
 
-            // جلب الحدث مع كل التفاصيل
-            var fullEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(evt.Id);
+            // الـ evt object يحتوي على كل البيانات بعد SaveChanges (EF Core ملأ الـ IDs)
+            // لا حاجة لـ re-fetch من قاعدة البيانات
             return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(
-                _mapper.Map<EventWithFullDetailsDto>(fullEvent),
+                _mapper.Map<EventWithFullDetailsDto>(evt),
                 "تم إنشاء الحدث بنجاح");
         }
         catch (Exception)
@@ -266,7 +261,6 @@ public class EventService : IEventService
         }
 
         _unitOfWork.Events.Update(evt);
-        await _unitOfWork.SaveChangesAsync();
 
         // تحديث الأقسام والمكونات
         if (request.Sections != null)
@@ -275,17 +269,15 @@ public class EventService : IEventService
             var existingSections = await _unitOfWork.Sections.GetByEventIdWithComponentsAsync(id);
             foreach (var section in existingSections)
             {
-                // حذف المكونات أولاً
                 foreach (var component in section.Components.ToList())
                 {
                     _unitOfWork.Components.Delete(component);
                 }
-                // ثم حذف القسم
                 _unitOfWork.Sections.Delete(section);
             }
-            await _unitOfWork.SaveChangesAsync();
 
-            // إنشاء الأقسام والمكونات الجديدة
+            // إنشاء الأقسام والمكونات الجديدة باستخدام Navigation Properties
+            // EF Core سيربط الـ IDs تلقائياً عند الحفظ
             foreach (var sectionReq in request.Sections)
             {
                 var section = new Section
@@ -297,17 +289,12 @@ public class EventService : IEventService
                     EventId = evt.Id
                 };
 
-                await _unitOfWork.Sections.AddAsync(section);
-                await _unitOfWork.SaveChangesAsync();
-
-                // إنشاء المكونات
                 if (sectionReq.Components != null && sectionReq.Components.Count > 0)
                 {
                     foreach (var compReq in sectionReq.Components)
                     {
-                        var component = new Component
+                        section.Components.Add(new Component
                         {
-                            SectionId = section.Id,
                             Type = compReq.Type,
                             Order = compReq.Order,
                             Title = compReq.Title,
@@ -327,13 +314,16 @@ public class EventService : IEventService
                             MediaUrl = compReq.MediaUrl,
                             MediaType = compReq.MediaType,
                             StyleJson = compReq.StyleJson
-                        };
-                        await _unitOfWork.Components.AddAsync(component);
+                        });
                     }
-                    await _unitOfWork.SaveChangesAsync();
                 }
+
+                await _unitOfWork.Sections.AddAsync(section);
             }
         }
+
+        // حفظ كل شيء مرة واحدة بدل SaveChanges متعددة
+        await _unitOfWork.SaveChangesAsync();
 
         // جلب الحدث المحدث مع كل التفاصيل
         var fullEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(evt.Id);
@@ -407,10 +397,8 @@ public class EventService : IEventService
             // لا ننسخ: StartDate, EndDate, ViewCount, ResponseCount
         };
 
-        await _unitOfWork.Events.AddAsync(newEvent);
-        await _unitOfWork.SaveChangesAsync();
-
-        // 2️⃣ نسخ الأقسام والمكونات
+        // 2️⃣ نسخ الأقسام والمكونات باستخدام Navigation Properties
+        // EF Core سيربط الـ IDs تلقائياً عند الحفظ
         if (evt.Sections != null && evt.Sections.Any())
         {
             foreach (var section in evt.Sections.OrderBy(s => s.Order))
@@ -420,19 +408,15 @@ public class EventService : IEventService
                     Title = section.Title,
                     Description = section.Description,
                     Order = section.Order,
-                    IsVisible = section.IsVisible,
-                    EventId = newEvent.Id
+                    IsVisible = section.IsVisible
                 };
 
-                await _unitOfWork.Sections.AddAsync(newSection);
-                await _unitOfWork.SaveChangesAsync();
-
-                // 3️⃣ نسخ المكونات
+                // 3️⃣ نسخ المكونات وربطها بالقسم
                 if (section.Components != null && section.Components.Any())
                 {
                     foreach (var component in section.Components.OrderBy(c => c.Order))
                     {
-                        var newComponent = new Component
+                        newSection.Components.Add(new Component
                         {
                             Type = component.Type,
                             Order = component.Order,
@@ -452,21 +436,22 @@ public class EventService : IEventService
                             MaxLabel = component.MaxLabel,
                             MediaUrl = component.MediaUrl,
                             MediaType = component.MediaType,
-                            StyleJson = component.StyleJson,
-                            SectionId = newSection.Id
-                        };
-
-                        await _unitOfWork.Components.AddAsync(newComponent);
+                            StyleJson = component.StyleJson
+                        });
                     }
-                    await _unitOfWork.SaveChangesAsync();
                 }
+
+                newEvent.Sections.Add(newSection);
             }
         }
 
-        // 4️⃣ جلب الحدث المنسوخ مع التفاصيل الكاملة
-        var fullNewEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(newEvent.Id);
+        // حفظ كل شيء مرة واحدة (الحدث + الأقسام + المكونات)
+        await _unitOfWork.Events.AddAsync(newEvent);
+        await _unitOfWork.SaveChangesAsync();
+
+        // الـ newEvent يحتوي على كل البيانات بعد SaveChanges
         return ApiResponse<EventDto>.SuccessResponse(
-            _mapper.Map<EventDto>(fullNewEvent),
+            _mapper.Map<EventDto>(newEvent),
             "تم نسخ الحدث بنجاح");
     }
 
@@ -537,20 +522,17 @@ public class EventService : IEventService
         // جلب إجمالي المشاهدات والردود
         var (totalViews, totalResponses) = await _unitOfWork.Events.GetTotalStatsAsync(userId);
 
-        // حساب معدل الإكمال (متوسط نسبة الردود المكتملة)
+        // حساب معدل الإكمال (متوسط نسبة الردود المكتملة) - استعلام واحد بدل N استعلام
         double avgCompletionRate = 0;
-        if (events.Any())
+        var eventsWithResponses = events.Where(e => e.ResponseCount > 0).ToList();
+        if (eventsWithResponses.Any())
         {
-            var completionRates = new List<double>();
-            foreach (var evt in events.Where(e => e.ResponseCount > 0))
+            var completionRates = await _unitOfWork.Responses.GetBulkCompletionRatesAsync(
+                eventsWithResponses.Select(e => e.Id));
+            if (completionRates.Any())
             {
-                var stats = await _unitOfWork.Responses.GetEventStatsAsync(evt.Id);
-                if (stats.TotalResponses > 0)
-                {
-                    completionRates.Add((double)stats.CompletedResponses / stats.TotalResponses * 100);
-                }
+                avgCompletionRate = completionRates.Values.Average();
             }
-            avgCompletionRate = completionRates.Any() ? completionRates.Average() : 0;
         }
 
         // حساب نسب التغيير

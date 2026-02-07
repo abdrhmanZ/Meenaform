@@ -191,7 +191,7 @@ export const eventsService = {
    * Backend يُرجع List<EventListItemDto>
    */
   getByType: async (type: EventType): Promise<Event[]> => {
-    const typeNumber = { survey: 1, quiz: 2, form: 3, poll: 4 }[type];
+    const typeNumber = { survey: 1, quiz: 2, form: 3, poll: 4, document_signing: 5 }[type];
     const response = await apiClient.get<ApiResponse<BackendEventListItemDto[]>>(
       `/Events/by-type/${typeNumber}`
     );

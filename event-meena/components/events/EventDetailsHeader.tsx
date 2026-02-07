@@ -15,6 +15,7 @@ import {
   BookmarkPlus,
   Send,
   FileText,
+  PenTool,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -36,7 +37,7 @@ interface EventDetailsHeaderProps {
   onUnpublish?: () => void;
 }
 
-const eventTypeConfig = {
+const eventTypeConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   survey: {
     label: "استبيان",
     color: "text-blue-600",
@@ -56,6 +57,11 @@ const eventTypeConfig = {
     label: "اختبار",
     color: "text-orange-600",
     bgColor: "bg-orange-50",
+  },
+  document_signing: {
+    label: "توقيع وثيقة",
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
   },
 };
 
@@ -158,18 +164,20 @@ export default function EventDetailsHeader({
               </Link>
             </Button>
 
-            {/* Preview Page - Hidden on mobile, shown in dropdown */}
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="hidden md:inline-flex hover:bg-primary/5 hover:border-primary"
-            >
-              <Link href={`/preview/${event.id}`} target="_blank">
-                <Eye className="w-5 h-5 ml-2" />
-                معاينة
-              </Link>
-            </Button>
+            {/* Preview Page - Hidden on mobile, shown in dropdown - Not for document_signing */}
+            {event.type !== "document_signing" && (
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="hidden md:inline-flex hover:bg-primary/5 hover:border-primary"
+              >
+                <Link href={`/preview/${event.id}`} target="_blank">
+                  <Eye className="w-5 h-5 ml-2" />
+                  معاينة
+                </Link>
+              </Button>
+            )}
 
             {/* Edit */}
             <Button
@@ -209,26 +217,32 @@ export default function EventDetailsHeader({
                     عرض النتائج
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="md:hidden">
-                  <Link href={`/preview/${event.id}`} target="_blank">
-                    <Eye className="w-4 h-4 ml-2" />
-                    معاينة
-                  </Link>
-                </DropdownMenuItem>
+                {event.type !== "document_signing" && (
+                  <DropdownMenuItem asChild className="md:hidden">
+                    <Link href={`/preview/${event.id}`} target="_blank">
+                      <Eye className="w-4 h-4 ml-2" />
+                      معاينة
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onShare} className="md:hidden">
                   <Share2 className="w-4 h-4 ml-2" />
                   مشاركة
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="md:hidden" />
-                {/* Always visible items */}
-                <DropdownMenuItem onClick={onSaveAsTemplate}>
-                  <BookmarkPlus className="w-4 h-4 ml-2" />
-                  حفظ كقالب
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDuplicate}>
-                  <Copy className="w-4 h-4 ml-2" />
-                  نسخ الحدث
-                </DropdownMenuItem>
+                {/* Always visible items - Not for document_signing */}
+                {event.type !== "document_signing" && (
+                  <>
+                    <DropdownMenuItem onClick={onSaveAsTemplate}>
+                      <BookmarkPlus className="w-4 h-4 ml-2" />
+                      حفظ كقالب
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onDuplicate}>
+                      <Copy className="w-4 h-4 ml-2" />
+                      نسخ الحدث
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={onDelete}

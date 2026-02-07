@@ -2,7 +2,7 @@
 
 import { Event } from "@/types/event";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, FileText, HelpCircle, ClipboardList, Target } from "lucide-react";
+import { Calendar, Clock, FileText, HelpCircle, ClipboardList, Target, PenTool } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -10,7 +10,7 @@ interface EventInfoProps {
   event: Event;
 }
 
-const eventTypeConfig = {
+const eventTypeConfig: Record<string, { label: string; icon: any; color: string; bgColor: string; borderColor: string; headerBg: string }> = {
   survey: {
     label: "استبيان",
     icon: FileText,
@@ -42,6 +42,14 @@ const eventTypeConfig = {
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     headerBg: "bg-gradient-to-r from-[#1a56db] to-[#0ea5e9]",
+  },
+  document_signing: {
+    label: "توقيع وثيقة",
+    icon: PenTool,
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+    borderColor: "border-teal-200",
+    headerBg: "bg-gradient-to-r from-teal-500 to-teal-600",
   },
 };
 

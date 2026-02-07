@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/dashboard/LoadingState";
 import { Response } from "@/types/response";
+import { DocumentSigningEvent } from "@/types/document-signing";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -20,12 +22,19 @@ import {
   FileText,
   Search,
   Filter,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import ExportPDFDialog from "@/components/dashboard/results/ExportPDFDialog";
 import ExportExcelDialog from "@/components/dashboard/results/ExportExcelDialog";
-import { responsesService } from "@/lib/api/services";
+import { responsesService, documentSigningService } from "@/lib/api/services";
+
+// Dynamic import for DocumentSigningResults to avoid SSR issues
+const DocumentSigningResults = dynamic(
+  () => import("@/components/events/document-signing/DocumentSigningResults"),
+  { ssr: false, loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> }
+);
 
 function ResultsPageContent() {
   const params = useParams();
@@ -40,12 +49,30 @@ function ResultsPageContent() {
   const [showExcelExportDialog, setShowExcelExportDialog] = useState(false);
   const [isLoadingResponses, setIsLoadingResponses] = useState(false);
 
+  // Document Signing specific state
+  const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
+
   useEffect(() => {
     if (eventId) {
       fetchEventById(eventId);
       loadResponses();
     }
   }, [eventId, fetchEventById]);
+
+  // Fetch document signing event data if needed
+  useEffect(() => {
+    const fetchDocumentSigningData = async () => {
+      if (currentEvent?.type === "document_signing") {
+        try {
+          const docEvent = await documentSigningService.getDocumentEvent(eventId);
+          setDocumentSigningEvent(docEvent);
+        } catch (err) {
+          console.error("Error fetching document signing event:", err);
+        }
+      }
+    };
+    fetchDocumentSigningData();
+  }, [currentEvent, eventId]);
 
   const loadResponses = async () => {
     setIsLoadingResponses(true);
@@ -143,33 +170,52 @@ function ResultsPageContent() {
               </div>
             </div>
 
-            {/* Export Buttons */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExcelExportDialog(true)}
-                className="flex-1 sm:flex-none"
-              >
-                <FileSpreadsheet className="w-4 h-4 ml-1 sm:ml-2" />
-                <span className="hidden xs:inline">تصدير</span> Excel
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExportDialog(true)}
-                className="flex-1 sm:flex-none"
-              >
-                <FileText className="w-4 h-4 ml-1 sm:ml-2" />
-                <span className="hidden xs:inline">تصدير</span> PDF
-              </Button>
-            </div>
+            {/* Export Buttons - Only for non-document-signing events */}
+            {currentEvent.type !== "document_signing" && (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExcelExportDialog(true)}
+                  className="flex-1 sm:flex-none"
+                >
+                  <FileSpreadsheet className="w-4 h-4 ml-1 sm:ml-2" />
+                  <span className="hidden xs:inline">تصدير</span> Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportDialog(true)}
+                  className="flex-1 sm:flex-none"
+                >
+                  <FileText className="w-4 h-4 ml-1 sm:ml-2" />
+                  <span className="hidden xs:inline">تصدير</span> PDF
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Document Signing Results */}
+        {currentEvent.type === "document_signing" ? (
+          documentSigningEvent ? (
+            <DocumentSigningResults
+              event={documentSigningEvent}
+              onViewSignature={(responseId) =>
+                router.push(`/dashboard/events/${eventId}/results/${responseId}`)
+              }
+            />
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )
+        ) : (
+          <>
+            {/* Regular Results Content */}
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">
@@ -324,26 +370,31 @@ function ResultsPageContent() {
             ))}
           </div>
         )}
+          </>
+        )}
       </div>
 
-      {/* Export PDF Dialog */}
-      <ExportPDFDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        eventTitle={currentEvent.title}
-        responses={responses}
-        components={currentEvent.sections.flatMap((section) => section.components)}
-      />
+      {/* Export PDF Dialog - Only for non-document-signing events */}
+      {currentEvent.type !== "document_signing" && (
+        <>
+          <ExportPDFDialog
+            open={showExportDialog}
+            onOpenChange={setShowExportDialog}
+            eventTitle={currentEvent.title}
+            responses={responses}
+            components={currentEvent.sections.flatMap((section) => section.components)}
+          />
 
-      {/* Export Excel Dialog */}
-      <ExportExcelDialog
-        open={showExcelExportDialog}
-        onOpenChange={setShowExcelExportDialog}
-        eventTitle={currentEvent.title}
-        responses={responses}
-        components={currentEvent.sections.flatMap((section) => section.components)}
-        isQuiz={currentEvent.type === "quiz"}
-      />
+          <ExportExcelDialog
+            open={showExcelExportDialog}
+            onOpenChange={setShowExcelExportDialog}
+            eventTitle={currentEvent.title}
+            responses={responses}
+            components={currentEvent.sections.flatMap((section) => section.components)}
+            isQuiz={currentEvent.type === "quiz"}
+          />
+        </>
+      )}
     </DashboardLayout>
   );
 }

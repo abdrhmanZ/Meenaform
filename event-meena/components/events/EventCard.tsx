@@ -18,6 +18,9 @@ import {
   Trash2,
   Layers,
   Grid3x3,
+  PenTool,
+  FileSignature,
+  BarChart3,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -38,7 +41,7 @@ interface EventCardProps {
   onArchive?: (id: string) => void;
 }
 
-const eventTypeConfig = {
+const eventTypeConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
   survey: {
     label: "استبيان",
     icon: FileText,
@@ -63,24 +66,32 @@ const eventTypeConfig = {
     color: "text-orange-600",
     bgColor: "bg-orange-50",
   },
+  document_signing: {
+    label: "توقيع وثيقة",
+    icon: PenTool,
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+  },
 };
 
 export default function EventCard({ event, onDelete, onDuplicate, onArchive }: EventCardProps) {
-  // Debug: Log event data to see what's being passed
-  console.log("🎴 EventCard - event:", event);
-  console.log("🎴 EventCard - event.title:", event.title);
-
   const typeConfig = eventTypeConfig[event.type];
   const TypeIcon = typeConfig.icon;
 
-  // حساب عدد الأقسام والمكونات
-  // استخدام الخصائص المباشرة من API أولاً، ثم الـ fallback للـ sections array
+  // التحقق من نوع الحدث
+  const isDocumentSigning = event.type === "document_signing";
+
+  // حساب عدد الأقسام والمكونات (للأحداث العادية)
   const sectionsCount = event.sectionsCount ?? event.sections?.length ?? 0;
   const componentsCount = event.componentsCount ??
     event.sections?.reduce((total, section) => total + (section.components?.length || 0), 0) ?? 0;
 
+  // بيانات حدث الوثيقة (إذا كان document_signing)
+  const signatureFieldsCount = event.signatureFieldsCount ?? 0;
+  const signaturesCount = event.signaturesCount ?? 0;
+
   return (
-    <Card className="p-6 hover:shadow-xl transition-all duration-300 hover:border-primary/20 group">
+    <Card className="p-6 hover:shadow-xl transition-all duration-300 hover:border-primary/20 group flex flex-col h-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3 flex-1">
@@ -147,49 +158,89 @@ export default function EventCard({ event, onDelete, onDuplicate, onArchive }: E
         </span>
       </div>
 
-      {/* الإحصائيات */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <Layers className="w-4 h-4 text-blue-600" />
-            <p className="text-xs text-blue-600 font-medium">الأقسام</p>
+      {/* الإحصائيات - مختلفة حسب نوع الحدث */}
+      {isDocumentSigning ? (
+        // إحصائيات حدث الوثيقة - 3 أعمدة
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="p-2 bg-teal-50 rounded-lg text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <FileSignature className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+              <p className="text-[10px] text-teal-600 font-medium whitespace-nowrap">الحقول</p>
+            </div>
+            <p className="text-xl font-bold text-teal-700">
+              {signatureFieldsCount}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-blue-700">
-            {sectionsCount}
-          </p>
-        </div>
-        <div className="p-3 bg-purple-50 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <Grid3x3 className="w-4 h-4 text-purple-600" />
-            <p className="text-xs text-purple-600 font-medium">المكونات</p>
+          <div className="p-2 bg-emerald-50 rounded-lg text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <PenTool className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+              <p className="text-[10px] text-emerald-600 font-medium whitespace-nowrap">التوقيعات</p>
+            </div>
+            <p className="text-xl font-bold text-emerald-700">
+              {signaturesCount}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-purple-700">
-            {componentsCount}
-          </p>
+          <div className="p-2 bg-green-50 rounded-lg text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Eye className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+              <p className="text-[10px] text-green-600 font-medium whitespace-nowrap">المشاهدات</p>
+            </div>
+            <p className="text-xl font-bold text-green-700">
+              {event.stats?.views || 0}
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        // إحصائيات الأحداث العادية
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Layers className="w-4 h-4 text-blue-600" />
+              <p className="text-xs text-blue-600 font-medium">الأقسام</p>
+            </div>
+            <p className="text-2xl font-bold text-blue-700">
+              {sectionsCount}
+            </p>
+          </div>
+          <div className="p-3 bg-purple-50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Grid3x3 className="w-4 h-4 text-purple-600" />
+              <p className="text-xs text-purple-600 font-medium">المكونات</p>
+            </div>
+            <p className="text-2xl font-bold text-purple-700">
+              {componentsCount}
+            </p>
+          </div>
+        </div>
+      )}
 
-      {/* إحصائيات الردود */}
-      <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">الردود</p>
-          <p className="text-lg font-bold text-primary">
-            {event.stats?.totalResponses || 0}
-          </p>
+      {/* إحصائيات الردود - للأحداث العادية فقط */}
+      {!isDocumentSigning && (
+        // إحصائيات الأحداث العادية
+        <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 mb-1">الردود</p>
+            <p className="text-lg font-bold text-primary">
+              {event.stats?.totalResponses || 0}
+            </p>
+          </div>
+          <div className="text-center border-x border-gray-200">
+            <p className="text-xs text-gray-500 mb-1">المشاهدات</p>
+            <p className="text-lg font-bold text-green-600">
+              {event.stats?.views || 0}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 mb-1">الإكمال</p>
+            <p className="text-lg font-bold text-orange-600">
+              {event.stats?.completionRate || 0}%
+            </p>
+          </div>
         </div>
-        <div className="text-center border-x border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">المشاهدات</p>
-          <p className="text-lg font-bold text-green-600">
-            {event.stats?.views || 0}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">الإكمال</p>
-          <p className="text-lg font-bold text-orange-600">
-            {event.stats?.completionRate || 0}%
-          </p>
-        </div>
-      </div>
+      )}
+
+      {/* مساحة فارغة لدفع الأزرار للأسفل */}
+      <div className="flex-1" />
 
       {/* التاريخ */}
       <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">

@@ -185,6 +185,64 @@ namespace EventMeena.Infrastructure.Migrations
                     b.ToTable("ContactGroups", (string)null);
                 });
 
+            modelBuilder.Entity("EventMeena.Domain.Entities.DocumentSignature", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("ResponseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SignatureData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SignatureFieldId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("SignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SignerEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("SignerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SignerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ResponseId");
+
+                    b.HasIndex("SignatureFieldId");
+
+                    b.HasIndex("SignerEmail");
+
+                    b.ToTable("DocumentSignatures", (string)null);
+                });
+
             modelBuilder.Entity("EventMeena.Domain.Entities.Event", b =>
                 {
                     b.Property<Guid>("Id")
@@ -192,6 +250,9 @@ namespace EventMeena.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("AllowAnonymous")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowDownloadAfterSigning")
                         .HasColumnType("bit");
 
                     b.Property<bool>("AllowEditResponses")
@@ -213,6 +274,12 @@ namespace EventMeena.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("DocumentFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
@@ -244,6 +311,9 @@ namespace EventMeena.Infrastructure.Migrations
                     b.Property<int>("ResponseCount")
                         .HasColumnType("int");
 
+                    b.Property<bool>("SendCopyToSigner")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ShareCode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -264,6 +334,14 @@ namespace EventMeena.Infrastructure.Migrations
 
                     b.Property<bool>("ShuffleQuestions")
                         .HasColumnType("bit");
+
+                    b.Property<string>("SignatureDisplayMode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SigningMode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
@@ -540,6 +618,74 @@ namespace EventMeena.Infrastructure.Migrations
                     b.ToTable("SendHistories", (string)null);
                 });
 
+            modelBuilder.Entity("EventMeena.Domain.Entities.SignatureField", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AssignedEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FieldType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("signature");
+
+                    b.Property<double>("Height")
+                        .HasColumnType("float");
+
+                    b.Property<bool>("IncludeDate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IncludeName")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRequired")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Order")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("PageNumber")
+                        .HasColumnType("int");
+
+                    b.Property<double>("PositionX")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PositionY")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("Width")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("SignatureFields", (string)null);
+                });
+
             modelBuilder.Entity("EventMeena.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -693,6 +839,25 @@ namespace EventMeena.Infrastructure.Migrations
                     b.Navigation("Group");
                 });
 
+            modelBuilder.Entity("EventMeena.Domain.Entities.DocumentSignature", b =>
+                {
+                    b.HasOne("EventMeena.Domain.Entities.Response", "Response")
+                        .WithMany()
+                        .HasForeignKey("ResponseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EventMeena.Domain.Entities.SignatureField", "SignatureField")
+                        .WithMany("Signatures")
+                        .HasForeignKey("SignatureFieldId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Response");
+
+                    b.Navigation("SignatureField");
+                });
+
             modelBuilder.Entity("EventMeena.Domain.Entities.Event", b =>
                 {
                     b.HasOne("EventMeena.Domain.Entities.User", "User")
@@ -755,6 +920,17 @@ namespace EventMeena.Infrastructure.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("EventMeena.Domain.Entities.SignatureField", b =>
+                {
+                    b.HasOne("EventMeena.Domain.Entities.Event", "Event")
+                        .WithMany("SignatureFields")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
             modelBuilder.Entity("EventMeena.Domain.Entities.UserTemplate", b =>
                 {
                     b.HasOne("EventMeena.Domain.Entities.User", "User")
@@ -780,6 +956,8 @@ namespace EventMeena.Infrastructure.Migrations
                     b.Navigation("Sections");
 
                     b.Navigation("SendHistories");
+
+                    b.Navigation("SignatureFields");
                 });
 
             modelBuilder.Entity("EventMeena.Domain.Entities.Group", b =>
@@ -790,6 +968,11 @@ namespace EventMeena.Infrastructure.Migrations
             modelBuilder.Entity("EventMeena.Domain.Entities.Section", b =>
                 {
                     b.Navigation("Components");
+                });
+
+            modelBuilder.Entity("EventMeena.Domain.Entities.SignatureField", b =>
+                {
+                    b.Navigation("Signatures");
                 });
 
             modelBuilder.Entity("EventMeena.Domain.Entities.User", b =>

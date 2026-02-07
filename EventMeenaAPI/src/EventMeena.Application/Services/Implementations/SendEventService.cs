@@ -41,26 +41,8 @@ public class SendEventService : ISendEventService
 
         var eventLink = $"{_frontendUrl}/e/{eventEntity.ShareCode}";
 
-        // 🔗 [DEV] طباعة معلومات الإرسال للتجربة
-        Console.WriteLine("════════════════════════════════════════════════════════════════");
-        Console.WriteLine("📧 [DEV] Send Event Invitation");
-        Console.WriteLine($"📌 Event: {eventEntity.Title}");
-        Console.WriteLine($"👤 To: {contact.Name} <{contact.Email}>");
-        Console.WriteLine($"🔗 Link: {eventLink}");
-        Console.WriteLine("════════════════════════════════════════════════════════════════");
-
         var success = await _emailService.SendEventInvitationAsync(
             contact.Email, contact.Name, eventEntity.Title, eventEntity.Description, eventLink);
-
-        // طباعة نتيجة الإرسال
-        if (success)
-        {
-            Console.WriteLine($"✅ [DEV] Email sent successfully to {contact.Email}");
-        }
-        else
-        {
-            Console.WriteLine($"❌ [DEV] Email failed to send to {contact.Email} (SendGrid API Key not configured?)");
-        }
 
         var sendHistory = new SendHistory
         {

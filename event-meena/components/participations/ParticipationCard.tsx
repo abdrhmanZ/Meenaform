@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Trophy,
   XCircle,
+  PenTool,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -23,11 +24,12 @@ interface ParticipationCardProps {
   onViewDetails: (responseId: string) => void;
 }
 
-const eventTypeConfig = {
+const eventTypeConfig: Record<string, { label: string; color: string; icon: any }> = {
   survey: { label: "استبيان", color: "bg-blue-100 text-blue-700", icon: ClipboardList },
   quiz: { label: "اختبار", color: "bg-purple-100 text-purple-700", icon: Trophy },
   form: { label: "نموذج", color: "bg-amber-100 text-amber-700", icon: FileText },
   poll: { label: "استطلاع", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
+  document_signing: { label: "توقيع وثيقة", color: "bg-teal-100 text-teal-700", icon: PenTool },
 };
 
 export default function ParticipationCard({ participation, onViewDetails }: ParticipationCardProps) {

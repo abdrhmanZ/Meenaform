@@ -13,5 +13,10 @@ public interface IContactRepository : IGenericRepository<Contact>
     Task<Contact?> GetByEmailAndUserIdAsync(string email, Guid userId);
     Task<bool> ExistsByEmailAndUserIdAsync(string email, Guid userId);
     Task<IReadOnlyList<Contact>> SearchAsync(Guid userId, string searchTerm);
+
+    /// <summary>
+    /// الحصول على جهات الاتصال مع pagination على مستوى قاعدة البيانات
+    /// </summary>
+    Task<(IReadOnlyList<Contact> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize);
 }
 

@@ -1,3 +1,4 @@
+using EventMeena.Application.DTOs.DocumentSigning;
 using EventMeena.Application.DTOs.Sections;
 using EventMeena.Domain.Enums;
 
@@ -40,6 +41,17 @@ public class EventDto
     public bool IsPrivate { get; set; }
     public List<string>? AllowedEmails { get; set; }
 
+    // إعدادات توقيع الوثائق (Document Signing)
+    public string? DocumentUrl { get; set; }
+    public string? DocumentFileName { get; set; }
+    public bool AllowDownloadAfterSigning { get; set; }
+    public bool SendCopyToSigner { get; set; }
+    public string SignatureDisplayMode { get; set; } = "inside";
+    /// <summary>
+    /// نوع التوقيع: single = موقّع واحد، multi = أكثر من موقّع
+    /// </summary>
+    public string SigningMode { get; set; } = "single";
+
     public int ViewCount { get; set; }
     public int ResponseCount { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -63,6 +75,14 @@ public class EventWithFullDetailsDto : EventDto
 }
 
 /// <summary>
+/// Event with signature fields DTO (for Document Signing events)
+/// </summary>
+public class EventWithSignatureFieldsDto : EventDto
+{
+    public List<SignatureFieldDto> SignatureFields { get; set; } = new();
+}
+
+/// <summary>
 /// Event list item DTO (lightweight)
 /// </summary>
 public class EventListItemDto
@@ -81,11 +101,21 @@ public class EventListItemDto
     public int ComponentsCount { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    // خاص بأحداث توقيع الوثائق
+    public int SignatureFieldsCount { get; set; }
+    public int SignaturesCount { get; set; } // عدد التوقيعات الفعلية
+
     /// <summary>
     /// معدل الإكمال (نسبة مئوية)
+    /// للأحداث العادية: نسبة الردود المكتملة
+    /// لأحداث الوثائق: نسبة التوقيعات المكتملة
     /// </summary>
-    public double CompletionRate => ResponseCount > 0
-        ? Math.Round((double)CompletedResponseCount / ResponseCount * 100, 1)
-        : 0;
+    public double CompletionRate => Type == EventType.DocumentSigning
+        ? (SignatureFieldsCount > 0 && ResponseCount > 0
+            ? Math.Round((double)SignaturesCount / (SignatureFieldsCount * ResponseCount) * 100, 1)
+            : 0)
+        : (ResponseCount > 0
+            ? Math.Round((double)CompletedResponseCount / ResponseCount * 100, 1)
+            : 0);
 }
 

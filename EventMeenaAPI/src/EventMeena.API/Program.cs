@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using EventMeena.API.Middleware;
@@ -12,11 +13,52 @@ using EventMeena.API.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
+
+// ===========================================
+// Serilog Configuration
+// ===========================================
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .Build())
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
+
+// ===========================================
+// 0. Response Compression (gzip/brotli)
+// ===========================================
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json",
+        "text/json",
+        "application/javascript",
+        "text/css",
+        "text/html"
+    });
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.SmallestSize;
+});
 
 // ===========================================
 // 1. Add Controllers with JSON Options
@@ -162,6 +204,7 @@ builder.Services.AddScoped<ITemplateService, TemplateService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISendEventService, SendEventService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IDocumentSigningService, DocumentSigningService>();
 
 // ===========================================
 // 8. JWT Authentication Configuration
@@ -211,27 +254,33 @@ var app = builder.Build();
 // Configure the HTTP request pipeline
 // ===========================================
 
-// CORS must be first to handle preflight OPTIONS requests
+// Response Compression must be early in the pipeline
+app.UseResponseCompression();
+
+// CORS must be before other middleware to handle preflight OPTIONS requests
 app.UseCors("AllowFrontend");
 
-// Enable Swagger in Development and Production (for API documentation)
-app.UseSwagger(options =>
+// Enable Swagger only in Development
+if (app.Environment.IsDevelopment())
 {
-    options.RouteTemplate = "swagger/{documentName}/swagger.json";
-});
+    app.UseSwagger(options =>
+    {
+        options.RouteTemplate = "swagger/{documentName}/swagger.json";
+    });
 
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "EventMeena API v1");
-    options.RoutePrefix = "swagger";
-    options.DocumentTitle = "EventMeena API Documentation";
-    options.DefaultModelsExpandDepth(2);
-    options.DefaultModelRendering(Swashbuckle.AspNetCore.SwaggerUI.ModelRendering.Model);
-    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
-    options.EnableFilter();
-    options.EnableDeepLinking();
-    options.DisplayRequestDuration();
-});
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "EventMeena API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "EventMeena API Documentation";
+        options.DefaultModelsExpandDepth(2);
+        options.DefaultModelRendering(Swashbuckle.AspNetCore.SwaggerUI.ModelRendering.Model);
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+        options.EnableFilter();
+        options.EnableDeepLinking();
+        options.DisplayRequestDuration();
+    });
+}
 
 // Global Exception Handling Middleware
 app.UseMiddleware<ExceptionMiddleware>();

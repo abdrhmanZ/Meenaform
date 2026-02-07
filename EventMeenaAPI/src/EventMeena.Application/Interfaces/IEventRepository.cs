@@ -35,5 +35,10 @@ public interface IEventRepository : IGenericRepository<Event>
     /// الحصول على عدد الأحداث خلال فترة محددة
     /// </summary>
     Task<int> GetEventsCountAsync(Guid userId, DateTime? startDate = null, DateTime? endDate = null);
+
+    /// <summary>
+    /// الحصول على الأحداث مع pagination على مستوى قاعدة البيانات
+    /// </summary>
+    Task<(IReadOnlyList<Event> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize);
 }
 

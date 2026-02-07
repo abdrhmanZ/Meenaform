@@ -350,11 +350,12 @@ function TemplatesPageContent() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredUserTemplates.map((template) => {
-                  const typeConfig = {
+                  const typeConfig: Record<string, { label: string; color: string }> = {
                     survey: { label: "استبيان", color: "bg-blue-100 text-blue-700" },
                     poll: { label: "استطلاع", color: "bg-purple-100 text-purple-700" },
                     form: { label: "نموذج", color: "bg-green-100 text-green-700" },
                     quiz: { label: "اختبار", color: "bg-orange-100 text-orange-700" },
+                    document_signing: { label: "توقيع وثيقة", color: "bg-teal-100 text-teal-700" },
                   };
                   const config = typeConfig[template.type];
 

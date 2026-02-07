@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { FileText, HelpCircle, ClipboardList, Target } from "lucide-react";
+import { FileText, HelpCircle, ClipboardList, Target, PenTool } from "lucide-react";
 
 interface EventFormProps {
   event?: Event;
@@ -34,7 +34,7 @@ const eventFormSchema = z.object({
     .string()
     .min(1, "الوصف مطلوب")
     .min(10, "الوصف يجب أن يكون 10 أحرف على الأقل"),
-  type: z.enum(["survey", "poll", "form", "quiz"], {
+  type: z.enum(["survey", "poll", "form", "quiz", "document_signing"], {
     message: "نوع الحدث مطلوب",
   }),
   status: z.enum(["draft", "active", "archived"], {
@@ -76,6 +76,12 @@ const eventTypes = [
     label: "اختبار",
     icon: Target,
     description: "اختبار المعرفة والمهارات",
+  },
+  {
+    value: "document_signing" as EventType,
+    label: "توقيع وثيقة",
+    icon: PenTool,
+    description: "رفع وثيقة PDF للتوقيع الإلكتروني",
   },
 ];
 

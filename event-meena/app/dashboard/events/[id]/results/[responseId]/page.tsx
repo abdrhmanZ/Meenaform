@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/dashboard/LoadingState";
 import { Response } from "@/types/response";
+import { DocumentSigningEvent } from "@/types/document-signing";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -22,11 +24,18 @@ import {
   Monitor,
   Smartphone,
   Tablet,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import ParticipantAnswers from "@/components/dashboard/results/ParticipantAnswers";
 import ExportPDFDialog from "@/components/dashboard/results/ExportPDFDialog";
-import { responsesService } from "@/lib/api/services";
+import { responsesService, documentSigningService } from "@/lib/api/services";
+
+// Dynamic import for SignatureDetails to avoid SSR issues with react-pdf
+const SignatureDetails = dynamic(
+  () => import("@/components/events/document-signing/SignatureDetails"),
+  { ssr: false, loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> }
+);
 
 function ParticipantDetailsPageContent() {
   const params = useParams();
@@ -36,15 +45,36 @@ function ParticipantDetailsPageContent() {
 
   const { currentEvent, fetchEventById, isLoading } = useEventsStore();
   const [response, setResponse] = useState<Response | null>(null);
+  const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
 
   useEffect(() => {
     if (eventId) {
       fetchEventById(eventId);
+    }
+  }, [eventId, fetchEventById]);
+
+  // Load response or document signing event based on event type
+  useEffect(() => {
+    if (!currentEvent) return;
+
+    if (currentEvent.type === "document_signing") {
+      // Load document signing event
+      const loadDocumentSigningEvent = async () => {
+        try {
+          const docEvent = await documentSigningService.getDocumentEvent(eventId);
+          setDocumentSigningEvent(docEvent);
+        } catch (error) {
+          console.error("❌ Failed to load document signing event:", error);
+        }
+      };
+      loadDocumentSigningEvent();
+    } else {
+      // Load regular response
       loadResponse();
     }
-  }, [eventId, responseId, fetchEventById]);
+  }, [currentEvent, eventId, responseId]);
 
   const loadResponse = async () => {
     setIsLoadingResponse(true);
@@ -93,7 +123,57 @@ function ParticipantDetailsPageContent() {
     return Monitor;
   };
 
-  if (isLoading || !currentEvent || !response) {
+  // Loading state
+  if (isLoading || !currentEvent) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <LoadingState message="جاري تحميل تفاصيل المشارك..." />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Document Signing Event - Show SignatureDetails
+  if (currentEvent.type === "document_signing") {
+    return (
+      <DashboardLayout>
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" asChild className="hover:bg-gray-100">
+                <Link href={`/dashboard/events/${eventId}/results`}>
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                  العودة إلى النتائج
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">تفاصيل التوقيع</h1>
+                <p className="text-gray-600 mt-1">{currentEvent.title}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-5xl mx-auto">
+            {documentSigningEvent ? (
+              <SignatureDetails event={documentSigningEvent} responseId={responseId} />
+            ) : (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Regular event - need response
+  if (!response) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -30,11 +30,12 @@ interface ParticipationDetailsModalProps {
   isLoading: boolean;
 }
 
-const eventTypeLabels = {
+const eventTypeLabels: Record<string, string> = {
   survey: "استبيان",
   quiz: "اختبار",
   form: "نموذج",
   poll: "استطلاع",
+  document_signing: "توقيع وثيقة",
 };
 
 export default function ParticipationDetailsModal({

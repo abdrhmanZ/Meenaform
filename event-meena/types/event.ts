@@ -6,7 +6,7 @@ import { Section } from "./section";
 /**
  * أنواع الأحداث
  */
-export type EventType = "survey" | "poll" | "form" | "quiz";
+export type EventType = "survey" | "poll" | "form" | "quiz" | "document_signing";
 
 /**
  * حالات الأحداث
@@ -45,6 +45,10 @@ export interface Event {
   // عداد الأقسام والمكونات (للقوائم - يأتي من EventListItemDto)
   sectionsCount?: number;
   componentsCount?: number;
+
+  // عداد حقول التوقيع والتوقيعات (لأحداث توقيع الوثائق)
+  signatureFieldsCount?: number;
+  signaturesCount?: number;
 
   // الإعدادات
   settings: EventSettings;

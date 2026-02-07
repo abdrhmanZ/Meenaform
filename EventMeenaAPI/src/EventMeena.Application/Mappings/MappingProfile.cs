@@ -3,6 +3,7 @@ using AutoMapper;
 using EventMeena.Application.DTOs.Auth;
 using EventMeena.Application.DTOs.Components;
 using EventMeena.Application.DTOs.Contacts;
+using EventMeena.Application.DTOs.DocumentSigning;
 using EventMeena.Application.DTOs.Events;
 using EventMeena.Application.DTOs.Groups;
 using EventMeena.Application.DTOs.Responses;
@@ -33,7 +34,11 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.ComponentsCount, opt => opt.MapFrom(src =>
                 src.Sections.Sum(s => s.Components.Count)))
             .ForMember(dest => dest.CompletedResponseCount, opt => opt.MapFrom(src =>
-                src.Responses.Count(r => r.Status == Domain.Enums.ResponseStatus.Completed)));
+                src.Responses.Count(r => r.Status == Domain.Enums.ResponseStatus.Completed)))
+            .ForMember(dest => dest.SignatureFieldsCount, opt => opt.MapFrom(src =>
+                src.SignatureFields != null ? src.SignatureFields.Count : 0))
+            .ForMember(dest => dest.SignaturesCount, opt => opt.MapFrom(src =>
+                src.SignatureFields != null ? src.SignatureFields.Sum(sf => sf.Signatures != null ? sf.Signatures.Count : 0) : 0));
         CreateMap<Event, EventWithSectionsDto>()
             .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)));
         CreateMap<Event, EventWithFullDetailsDto>()
@@ -103,6 +108,20 @@ public class MappingProfile : Profile
         CreateMap<CreateTemplateRequest, UserTemplate>();
         CreateMap<UpdateTemplateRequest, UserTemplate>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+        // Document Signing Mappings
+        CreateMap<Event, EventWithSignatureFieldsDto>()
+            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
+            .ForMember(dest => dest.SignatureFields, opt => opt.Ignore()); // يتم تعيينها يدوياً
+
+        CreateMap<SignatureField, SignatureFieldDto>();
+        CreateMap<CreateSignatureFieldRequest, SignatureField>();
+        CreateMap<UpdateSignatureFieldRequest, SignatureField>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+        CreateMap<DocumentSignature, DocumentSignatureDto>()
+            .ForMember(dest => dest.FieldLabel, opt => opt.MapFrom(src => src.SignatureField != null ? src.SignatureField.Label : null))
+            .ForMember(dest => dest.PageNumber, opt => opt.MapFrom(src => src.SignatureField != null ? src.SignatureField.PageNumber : 0));
     }
 
     /// <summary>

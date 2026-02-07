@@ -76,6 +76,7 @@ export default function EventFilters() {
             <SelectItem value="poll">استطلاع رأي</SelectItem>
             <SelectItem value="form">نموذج</SelectItem>
             <SelectItem value="quiz">اختبار</SelectItem>
+            <SelectItem value="document_signing">توقيع وثيقة</SelectItem>
           </SelectContent>
         </Select>
 

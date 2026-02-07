@@ -49,6 +49,41 @@ public class Event : AuditableEntity
     public string? GoodMessage { get; set; }
     public string? ImprovementMessage { get; set; }
 
+    // إعدادات توقيع الوثائق (Document Signing)
+    /// <summary>
+    /// رابط ملف PDF المرفوع (لأحداث توقيع الوثائق)
+    /// </summary>
+    public string? DocumentUrl { get; set; }
+
+    /// <summary>
+    /// اسم ملف PDF الأصلي
+    /// </summary>
+    public string? DocumentFileName { get; set; }
+
+    /// <summary>
+    /// السماح للموقّع بتحميل نسخة بعد التوقيع
+    /// </summary>
+    public bool AllowDownloadAfterSigning { get; set; } = true;
+
+    /// <summary>
+    /// إرسال نسخة للموقّع بالبريد الإلكتروني بعد التوقيع
+    /// </summary>
+    public bool SendCopyToSigner { get; set; } = false;
+
+    /// <summary>
+    /// طريقة عرض التوقيع للمشارك
+    /// inside = التوقيع داخل الـ PDF (الوضع الافتراضي)
+    /// outside = التوقيع خارج الـ PDF (في خانة منفصلة أسفله)
+    /// </summary>
+    public string SignatureDisplayMode { get; set; } = "inside";
+
+    /// <summary>
+    /// نوع التوقيع
+    /// single = موقّع واحد (النظام الحالي)
+    /// multi = أكثر من موقّع (كل حقل مخصص لإيميل معين)
+    /// </summary>
+    public string SigningMode { get; set; } = "single";
+
     // إحصائيات
     public int ViewCount { get; set; } = 0;
     public int ResponseCount { get; set; } = 0;
@@ -61,5 +96,6 @@ public class Event : AuditableEntity
     public virtual ICollection<Section> Sections { get; set; } = new List<Section>();
     public virtual ICollection<Response> Responses { get; set; } = new List<Response>();
     public virtual ICollection<SendHistory> SendHistories { get; set; } = new List<SendHistory>();
+    public virtual ICollection<SignatureField> SignatureFields { get; set; } = new List<SignatureField>();
 }
 

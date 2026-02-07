@@ -10,7 +10,7 @@ namespace EventMeena.Infrastructure.Data;
 /// </summary>
 public class ApplicationDbContext : DbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
@@ -27,10 +27,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserTemplate> UserTemplates => Set<UserTemplate>();
     public DbSet<SendHistory> SendHistories => Set<SendHistory>();
 
+    // Document Signing DbSets
+    public DbSet<SignatureField> SignatureFields => Set<SignatureField>();
+    public DbSet<DocumentSignature> DocumentSignatures => Set<DocumentSignature>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // تطبيق جميع الـ Configurations من الـ Assembly
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }

@@ -19,7 +19,6 @@ public class GroupRepository : GenericRepository<Group>, IGroupRepository
         return await _dbSet
             .Include(g => g.ContactGroups)
                 .ThenInclude(cg => cg.Contact)
-                    .ThenInclude(c => c.SendHistories)
             .Where(g => g.UserId == userId && g.IsActive)
             .OrderBy(g => g.Name)
             .ToListAsync();
@@ -30,7 +29,6 @@ public class GroupRepository : GenericRepository<Group>, IGroupRepository
         return await _dbSet
             .Include(g => g.ContactGroups)
                 .ThenInclude(cg => cg.Contact)
-                    .ThenInclude(c => c.SendHistories)
             .Where(g => g.UserId == userId && g.IsActive)
             .OrderBy(g => g.Name)
             .ToListAsync();
@@ -41,7 +39,6 @@ public class GroupRepository : GenericRepository<Group>, IGroupRepository
         return await _dbSet
             .Include(g => g.ContactGroups)
                 .ThenInclude(cg => cg.Contact)
-                    .ThenInclude(c => c.SendHistories)
             .FirstOrDefaultAsync(g => g.Id == id);
     }
 

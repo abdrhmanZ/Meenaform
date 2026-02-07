@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 import WizardProgressBar from "./WizardProgressBar";
 
 interface WizardLayoutProps {
@@ -15,6 +15,7 @@ interface WizardLayoutProps {
   previousLabel?: string;
   isNextDisabled?: boolean;
   showSaveDraft?: boolean;
+  isSaving?: boolean;
 }
 
 const steps = [
@@ -55,6 +56,7 @@ export default function WizardLayout({
   previousLabel = "السابق",
   isNextDisabled = false,
   showSaveDraft = true,
+  isSaving = false,
 }: WizardLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,10 +98,15 @@ export default function WizardLayout({
                   variant="outline"
                   size="lg"
                   onClick={onSaveDraft}
+                  disabled={isSaving}
                   className="hover:bg-gray-50"
                 >
-                  <Save className="w-5 h-5 ml-2" />
-                  حفظ كمسودة
+                  {isSaving ? (
+                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5 ml-2" />
+                  )}
+                  {isSaving ? "جاري الحفظ..." : "حفظ كمسودة"}
                 </Button>
               )}
 
@@ -108,11 +115,20 @@ export default function WizardLayout({
                 <Button
                   size="lg"
                   onClick={onNext}
-                  disabled={isNextDisabled}
+                  disabled={isNextDisabled || isSaving}
                   className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30"
                 >
-                  {nextLabel}
-                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      {nextLabel}
+                      <ArrowLeft className="w-5 h-5 mr-2" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

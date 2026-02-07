@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useEventBuilderStore } from "@/store/eventBuilderStore";
 import { useToast } from "@/hooks/use-toast";
 import WizardLayout from "./WizardLayout";
@@ -21,6 +22,7 @@ export default function EventBuilderWizard({
   onComplete,
 }: EventBuilderWizardProps) {
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
   const {
     currentStep,
     title,
@@ -52,6 +54,8 @@ export default function EventBuilderWizard({
   };
 
   const handleSaveDraft = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await onComplete();
       toast({
@@ -64,10 +68,14 @@ export default function EventBuilderWizard({
         description: "فشل حفظ التعديلات",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleFinalSubmit = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await onComplete();
       toast({
@@ -80,6 +88,8 @@ export default function EventBuilderWizard({
         description: mode === "edit" ? "فشل تحديث الحدث" : "فشل إنشاء الحدث",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -120,6 +130,7 @@ export default function EventBuilderWizard({
       nextLabel={currentStep === 5 ? (mode === "edit" ? "حفظ التعديلات" : "إنشاء الحدث") : "التالي"}
       isNextDisabled={isNextDisabled()}
       showSaveDraft={currentStep < 5}
+      isSaving={isSaving}
     >
       {renderStep()}
     </WizardLayout>

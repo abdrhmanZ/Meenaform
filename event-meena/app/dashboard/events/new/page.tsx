@@ -36,6 +36,7 @@ function NewEventPageContent() {
   const [showInitialChoice, setShowInitialChoice] = useState(true);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
   const [createdEventShareCode, setCreatedEventShareCode] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const isInitialMount = useRef(true);
 
   // Reset store when navigating to this page (unless coming from template selection)
@@ -107,6 +108,8 @@ function NewEventPageContent() {
   };
 
   const handleSaveDraft = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       const event = buildEvent();
       event.status = "draft";
@@ -122,10 +125,14 @@ function NewEventPageContent() {
         description: "فشل حفظ المسودة",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCreateEvent = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       const event = buildEvent();
       event.status = "active";
@@ -142,6 +149,8 @@ function NewEventPageContent() {
         description: "فشل إنشاء الحدث",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,6 +209,7 @@ function NewEventPageContent() {
       nextLabel={currentStep === 5 ? "إنشاء الحدث" : "التالي"}
       isNextDisabled={isNextDisabled()}
       showSaveDraft={currentStep < 5}
+      isSaving={isSaving}
     >
       {renderStep()}
     </WizardLayout>

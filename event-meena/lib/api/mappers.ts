@@ -68,6 +68,9 @@ export interface BackendEventListItemDto {
   componentsCount: number;
   completionRate: number;
   createdAt: string;
+  // خاص بأحداث توقيع الوثائق
+  signatureFieldsCount: number;
+  signaturesCount: number;
 }
 
 /** جهة الاتصال من Backend */
@@ -283,15 +286,16 @@ export const mapGroup = (backend: BackendGroupDto): Group => ({
 
 /**
  * تحويل نوع الحدث من رقم إلى نص
- * Backend Enum: Survey=1, Quiz=2, Form=3, Event=4
- * Frontend Type: "survey" | "poll" | "form" | "quiz"
+ * Backend Enum: Survey=1, Quiz=2, Form=3, Event=4, DocumentSigning=5
+ * Frontend Type: "survey" | "poll" | "form" | "quiz" | "document_signing"
  */
 const mapEventType = (type: number): EventType => {
   const types: Record<number, EventType> = {
-    1: "survey",  // Survey = 1
-    2: "quiz",    // Quiz = 2
-    3: "form",    // Form = 3
-    4: "poll",    // Event = 4 (نعتبره poll في الـ Frontend)
+    1: "survey",            // Survey = 1
+    2: "quiz",              // Quiz = 2
+    3: "form",              // Form = 3
+    4: "poll",              // Event = 4 (نعتبره poll في الـ Frontend)
+    5: "document_signing",  // DocumentSigning = 5
   };
   return types[type] || "survey";
 };
@@ -367,7 +371,7 @@ export const mapEvent = (backend: BackendEventDto): Event => ({
 /**
  * تحويل عنصر قائمة الحدث من Backend إلى Frontend
  */
-export const mapEventListItem = (backend: BackendEventListItemDto): Event => ({
+export const mapEventListItem = (backend: BackendEventListItemDto): Event & { signatureFieldsCount?: number; signaturesCount?: number } => ({
   id: backend.id,
   title: backend.title,
   description: backend.description || "",
@@ -378,6 +382,8 @@ export const mapEventListItem = (backend: BackendEventListItemDto): Event => ({
   sections: [],
   sectionsCount: backend.sectionsCount,
   componentsCount: backend.componentsCount,
+  signatureFieldsCount: backend.signatureFieldsCount || 0,
+  signaturesCount: backend.signaturesCount || 0,
   settings: {
     requireAuth: false,
     allowAnonymous: true,
@@ -709,6 +715,7 @@ const mapEventTypeToNumber = (type: EventType): number => {
     quiz: 2,    // Quiz = 2
     form: 3,    // Form = 3
     poll: 4,    // Event = 4 (poll في الـ Frontend = Event في الـ Backend)
+    document_signing: 5, // DocumentSigning = 5
   };
   return types[type] ?? 1; // Default: Survey
 };

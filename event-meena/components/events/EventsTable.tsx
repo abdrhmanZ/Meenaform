@@ -21,6 +21,7 @@ import {
   Copy,
   Trash2,
   MoreVertical,
+  PenTool,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -40,7 +41,7 @@ interface EventsTableProps {
   onArchive?: (id: string) => void;
 }
 
-const eventTypeConfig = {
+const eventTypeConfig: Record<string, { label: string; icon: any; color: string }> = {
   survey: {
     label: "استبيان",
     icon: FileText,
@@ -60,6 +61,11 @@ const eventTypeConfig = {
     label: "اختبار",
     icon: Target,
     color: "text-orange-600",
+  },
+  document_signing: {
+    label: "توقيع وثيقة",
+    icon: PenTool,
+    color: "text-teal-600",
   },
 };
 

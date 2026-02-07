@@ -52,6 +52,8 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
             .Include(e => e.Responses)
+            .Include(e => e.SignatureFields)
+                .ThenInclude(sf => sf.Signatures)
             .Where(e => e.UserId == userId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -150,6 +152,27 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
             query = query.Where(e => e.CreatedAt <= endDate.Value);
 
         return await query.CountAsync();
+    }
+
+    public async Task<(IReadOnlyList<Event> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize)
+    {
+        var query = _dbSet
+            .Include(e => e.Sections)
+                .ThenInclude(s => s.Components)
+            .Include(e => e.Responses)
+            .Include(e => e.SignatureFields)
+                .ThenInclude(sf => sf.Signatures)
+            .Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.CreatedAt);
+
+        var totalCount = await _dbSet.CountAsync(e => e.UserId == userId);
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 }
 

@@ -19,6 +19,11 @@ import LoadingState from "@/components/dashboard/LoadingState";
 import { AlertTriangle, Send, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+// Document Signing Components
+import DocumentInfoCard from "@/components/events/document-signing/DocumentInfoCard";
+import DocumentFieldsDisplay from "@/components/events/document-signing/DocumentFieldsDisplay";
+import { DocumentSigningEvent } from "@/types/document-signing";
+import * as documentSigningService from "@/lib/api/services/documentSigningService";
 
 function EventDetailsPageContent() {
   const params = useParams();
@@ -42,6 +47,7 @@ function EventDetailsPageContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
+  const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
 
   useEffect(() => {
     if (eventId) {
@@ -50,6 +56,21 @@ function EventDetailsPageContent() {
       fetchGroups();
     }
   }, [eventId, fetchEventById, fetchContacts, fetchGroups]);
+
+  // تحميل بيانات حدث التوقيع إذا كان النوع document_signing
+  useEffect(() => {
+    if (currentEvent?.type === "document_signing" && eventId) {
+      const loadDocumentSigningEvent = async () => {
+        try {
+          const docEvent = await documentSigningService.getDocumentEvent(eventId);
+          setDocumentSigningEvent(docEvent);
+        } catch (error) {
+          console.error("❌ Failed to load document signing event:", error);
+        }
+      };
+      loadDocumentSigningEvent();
+    }
+  }, [currentEvent?.type, eventId]);
 
   const handleDelete = async () => {
     try {
@@ -180,13 +201,23 @@ function EventDetailsPageContent() {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Left Column - Event Info & Sections */}
+          {/* Left Column - Event Info & Sections/Fields */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Event Info */}
-            <EventInfoCard event={currentEvent} />
-
-            {/* Sections Display */}
-            <EventSectionsDisplay event={currentEvent} />
+            {/* Event Info - مختلف حسب نوع الحدث */}
+            {currentEvent.type === "document_signing" && documentSigningEvent ? (
+              <>
+                <DocumentInfoCard event={documentSigningEvent} />
+                <DocumentFieldsDisplay
+                  fields={documentSigningEvent.signatureFields}
+                  documentFileName={documentSigningEvent.documentFileName}
+                />
+              </>
+            ) : (
+              <>
+                <EventInfoCard event={currentEvent} />
+                <EventSectionsDisplay event={currentEvent} />
+              </>
+            )}
           </div>
 
           {/* Right Column - QR Code & Public Link */}
