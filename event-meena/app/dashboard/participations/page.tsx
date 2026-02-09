@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/dashboard/LoadingState";
@@ -20,24 +20,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// ✅ Cache خارجي لمنع إعادة الجلب عند كل تنقل
+let cachedParticipations: ParticipatedEvent[] | null = null;
+
 function ParticipationsPageContent() {
   const { toast } = useToast();
-  const [participations, setParticipations] = useState<ParticipatedEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [participations, setParticipations] = useState<ParticipatedEvent[]>(cachedParticipations || []);
+  const [isLoading, setIsLoading] = useState(!cachedParticipations);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedParticipation, setSelectedParticipation] = useState<ParticipationDetails | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    fetchParticipations();
+    // ✅ لو البيانات موجودة في الـ cache، لا نحتاج API call
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      if (!cachedParticipations) {
+        fetchParticipations();
+      }
+    }
   }, []);
 
   const fetchParticipations = async () => {
     try {
       setIsLoading(true);
       const data = await responsesService.getMyParticipations();
+      cachedParticipations = data;
       setParticipations(data);
     } catch (error) {
       console.error("Error fetching participations:", error);

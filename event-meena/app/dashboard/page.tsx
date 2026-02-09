@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Calendar,
   BarChart3,
@@ -23,14 +23,18 @@ function DashboardContent() {
   const { events, fetchEvents, isLoading } = useEventsStore();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    fetchEvents();
-    // جلب إحصائيات لوحة التحكم من الـ API
-    eventsService.getDashboardStats().then((stats) => {
-      setDashboardStats(stats);
-      setStatsLoading(false);
-    });
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchEvents();
+      // جلب إحصائيات لوحة التحكم من الـ API
+      eventsService.getDashboardStats().then((stats) => {
+        setDashboardStats(stats);
+        setStatsLoading(false);
+      });
+    }
   }, [fetchEvents]);
 
   // استخدام البيانات من الـ API إذا كانت متوفرة، وإلا من الـ store
@@ -96,7 +100,8 @@ function DashboardContent() {
     };
   });
 
-  if (isLoading) {
+  // ✅ اعرض loading فقط لو ما فيه بيانات أصلاً (أول مرة)
+  if (isLoading && events.length === 0) {
     return (
       <DashboardLayout title="لوحة التحكم" description="نظرة عامة على أحداثك">
         <LoadingState message="جاري تحميل البيانات..." />

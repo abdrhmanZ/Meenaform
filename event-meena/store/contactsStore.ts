@@ -55,6 +55,10 @@ interface ContactsStoreState {
   searchGroups: (query: string) => Group[];
 }
 
+// متغيرات خارجية لمنع الاستدعاءات المتكررة (deduplication)
+let pendingFetchContacts: Promise<void> | null = null;
+let pendingFetchGroups: Promise<void> | null = null;
+
 export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // Initial state
   contacts: [],
@@ -67,26 +71,49 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   groupsFilters: {},
 
   // جلب جميع جهات الاتصال - متصل بـ Backend API
+  // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchContacts: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const contacts = await contactsService.getAll();
-      set({
-        contacts,
-        isLoading: false,
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "فشل تحميل جهات الاتصال";
-      set({
-        error: errorMessage,
-        isLoading: false,
-      });
+    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
+    const state = get();
+    if (state.contacts.length > 0 && !state.error) {
+      if (state.isLoading) {
+        set({ isLoading: false });
+      }
+      return;
     }
+
+    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
+    if (pendingFetchContacts) {
+      await pendingFetchContacts;
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    pendingFetchContacts = (async () => {
+      try {
+        const contacts = await contactsService.getAll();
+        set({
+          contacts,
+          isLoading: false,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "فشل تحميل جهات الاتصال";
+        set({
+          error: errorMessage,
+          isLoading: false,
+        });
+      } finally {
+        pendingFetchContacts = null;
+      }
+    })();
+
+    await pendingFetchContacts;
   },
 
   // جلب جهة اتصال بواسطة ID - متصل بـ Backend API
@@ -204,26 +231,49 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   },
 
   // جلب جميع المجموعات - متصل بـ Backend API
+  // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchGroups: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const groups = await groupsService.getAll();
-      set({
-        groups,
-        isLoading: false,
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "فشل تحميل المجموعات";
-      set({
-        error: errorMessage,
-        isLoading: false,
-      });
+    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
+    const state = get();
+    if (state.groups.length > 0 && !state.error) {
+      if (state.isLoading) {
+        set({ isLoading: false });
+      }
+      return;
     }
+
+    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
+    if (pendingFetchGroups) {
+      await pendingFetchGroups;
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    pendingFetchGroups = (async () => {
+      try {
+        const groups = await groupsService.getAll();
+        set({
+          groups,
+          isLoading: false,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "فشل تحميل المجموعات";
+        set({
+          error: errorMessage,
+          isLoading: false,
+        });
+      } finally {
+        pendingFetchGroups = null;
+      }
+    })();
+
+    await pendingFetchGroups;
   },
 
   // جلب مجموعة بواسطة ID - متصل بـ Backend API

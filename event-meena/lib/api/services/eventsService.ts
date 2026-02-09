@@ -75,34 +75,12 @@ export const eventsService = {
   getAll: async (): Promise<Event[]> => {
     const response = await apiClient.get<ApiResponse<BackendPagedResult<BackendEventListItemDto>>>("/Events");
 
-    console.log("📡 API Response:", response.data);
-    console.log("📡 API Response - items:", response.data.data?.items);
-
-    // Log ALL properties of first item to see the actual property names
-    if (response.data.data?.items?.[0]) {
-      console.log("📡 First item ALL KEYS:", Object.keys(response.data.data.items[0]));
-      console.log("📡 First item RAW:", JSON.stringify(response.data.data.items[0], null, 2));
-    }
-
-    // Log each item's title specifically
-    response.data.data?.items?.forEach((item, index) => {
-      console.log(`📡 Item ${index} - title:`, item.title, "| type:", typeof item.title);
-      // Also try Title (PascalCase)
-      console.log(`📡 Item ${index} - Title (PascalCase):`, (item as any).Title);
-    });
-
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "فشل جلب الأحداث");
     }
 
     // استخراج الـ items من الاستجابة المُرقّمة
     const events = response.data.data.items.map(mapEventListItem);
-    console.log("📋 Mapped Events:", events);
-
-    // Log each mapped event's title
-    events.forEach((event, index) => {
-      console.log(`📋 Mapped Event ${index} - title:`, event.title, "| type:", typeof event.title);
-    });
 
     return events;
   },

@@ -9,8 +9,11 @@ import { authService } from "@/lib/api/services/authService";
 import { tokenManager } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/client";
 
+// متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
+let pendingAuthCheck: Promise<void> | null = null;
+
 // إنشاء Store
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   // الحالة الأولية
   user: null,
   token: null,
@@ -94,6 +97,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await authService.logout();
     } finally {
       // مسح الحالة في جميع الحالات (حتى لو فشل الطلب)
+      pendingAuthCheck = null;
       set({
         user: null,
         token: null,
@@ -105,6 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   // التحقق من الجلسة الحالية - متصل بـ Backend API
+  // محسّن: يستخدم الـ cache لو المستخدم موجود + يمنع الاستدعاءات المتكررة
   checkAuth: async () => {
     // التحقق من وجود توكن محفوظ
     if (!tokenManager.hasValidToken()) {
@@ -118,31 +123,53 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
 
+    // ✅ لو المستخدم موجود في الـ store، لا نحتاج API call
+    const state = get();
+    if (state.user && state.isAuthenticated) {
+      if (state.isLoading) {
+        set({ isLoading: false });
+      }
+      return;
+    }
+
+    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد (deduplication)
+    if (pendingAuthCheck) {
+      await pendingAuthCheck;
+      return;
+    }
+
     set({ isLoading: true });
 
-    try {
-      // جلب بيانات المستخدم من الـ API
-      const user = await authService.getCurrentUser();
-      const token = tokenManager.getAccessToken();
+    // إنشاء promise واحد ومشاركته
+    pendingAuthCheck = (async () => {
+      try {
+        // جلب بيانات المستخدم من الـ API
+        const user = await authService.getCurrentUser();
+        const token = tokenManager.getAccessToken();
 
-      set({
-        user,
-        token,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-    } catch {
-      // فشل التحقق - مسح التوكن والحالة
-      tokenManager.clearTokens();
-      set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
-    }
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      } catch {
+        // فشل التحقق - مسح التوكن والحالة
+        tokenManager.clearTokens();
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null,
+        });
+      } finally {
+        pendingAuthCheck = null;
+      }
+    })();
+
+    await pendingAuthCheck;
   },
 
   // تحديث الملف الشخصي - متصل بـ Backend API

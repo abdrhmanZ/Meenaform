@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -12,10 +12,14 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const hasChecked = useRef(false);
 
   useEffect(() => {
-    // التحقق من الجلسة عند تحميل المكون
-    checkAuth();
+    // التحقق من الجلسة مرة واحدة فقط عند تحميل المكون
+    if (!hasChecked.current) {
+      hasChecked.current = true;
+      checkAuth();
+    }
   }, [checkAuth]);
 
   useEffect(() => {
@@ -25,8 +29,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // عرض Loading أثناء التحقق
-  if (isLoading || !isAuthenticated) {
+  // ✅ لو المستخدم مسجل دخول، اعرض المحتوى فوراً بدون loading
+  if (isAuthenticated && !isLoading) {
+    return <>{children}</>;
+  }
+
+  // عرض Loading أثناء التحقق الأولي فقط
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -37,7 +46,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // عرض المحتوى المحمي
-  return <>{children}</>;
+  // في حالة عدم المصادقة وعدم التحميل (سيتم التوجيه للـ login)
+  return null;
 }
 

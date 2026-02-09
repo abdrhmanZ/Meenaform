@@ -8,6 +8,9 @@ import { Event, EventFormData, EventsState, EventStatus, EventType } from "@/typ
 import { eventsService } from "@/lib/api/services/eventsService";
 import { ApiError } from "@/lib/api/client";
 
+// متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
+let pendingFetchEvents: Promise<void> | null = null;
+
 export const useEventsStore = create<EventsState>((set, get) => ({
   events: [],
   currentEvent: null,
@@ -23,23 +26,46 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   },
 
   // جلب جميع الأحداث - متصل بـ Backend API
+  // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchEvents: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const events = await eventsService.getAll();
-      set({ events, isLoading: false });
-    } catch (error) {
-      const errorMessage =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "حدث خطأ أثناء جلب الأحداث";
-      set({
-        error: errorMessage,
-        isLoading: false,
-      });
+    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
+    const state = get();
+    if (state.events.length > 0 && !state.error) {
+      if (state.isLoading) {
+        set({ isLoading: false });
+      }
+      return;
     }
+
+    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
+    if (pendingFetchEvents) {
+      await pendingFetchEvents;
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    pendingFetchEvents = (async () => {
+      try {
+        const events = await eventsService.getAll();
+        set({ events, isLoading: false });
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "حدث خطأ أثناء جلب الأحداث";
+        set({
+          error: errorMessage,
+          isLoading: false,
+        });
+      } finally {
+        pendingFetchEvents = null;
+      }
+    })();
+
+    await pendingFetchEvents;
   },
 
   // جلب حدث بواسطة ID - متصل بـ Backend API

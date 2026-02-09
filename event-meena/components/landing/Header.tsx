@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,14 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
+  const hasChecked = useRef(false);
 
-  // التحقق من الجلسة عند تحميل المكون
+  // التحقق من الجلسة مرة واحدة فقط عند تحميل المكون
   useEffect(() => {
-    checkAuth();
+    if (!hasChecked.current) {
+      hasChecked.current = true;
+      checkAuth();
+    }
   }, [checkAuth]);
 
   const handleLogout = async () => {
