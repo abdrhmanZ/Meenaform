@@ -16,9 +16,9 @@ public class GroupRepository : GenericRepository<Group>, IGroupRepository
 
     public async Task<IReadOnlyList<Group>> GetByUserIdAsync(Guid userId)
     {
+        // Lightweight: only load ContactGroups for count, no Contact details
         return await _dbSet
             .Include(g => g.ContactGroups)
-                .ThenInclude(cg => cg.Contact)
             .Where(g => g.UserId == userId && g.IsActive)
             .OrderBy(g => g.Name)
             .ToListAsync();
