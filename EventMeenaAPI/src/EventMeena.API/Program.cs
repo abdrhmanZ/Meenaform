@@ -170,6 +170,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
             b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
             b.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            b.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
         }));
 
 // ===========================================
