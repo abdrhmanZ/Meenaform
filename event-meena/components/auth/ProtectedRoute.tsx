@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { tokenManager } from "@/lib/api/client";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,8 +15,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const hasChecked = useRef(false);
 
+  // ✅ تحقق مباشر من localStorage - يشتغل حتى في أول render بعد SSR
+  const hasToken = tokenManager.hasValidToken();
+
   useEffect(() => {
-    // التحقق من الجلسة مرة واحدة فقط عند تحميل المكون
+    // التحقق من الجلسة في الخلفية (مرة واحدة فقط)
     if (!hasChecked.current) {
       hasChecked.current = true;
       checkAuth();
@@ -24,17 +28,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مسجلاً
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !hasToken) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, hasToken, router]);
 
-  // ✅ لو المستخدم مسجل دخول، اعرض المحتوى فوراً بدون loading
-  if (isAuthenticated && !isLoading) {
+  // ✅ Optimistic: لو التوكن موجود أو المستخدم مسجل، اعرض المحتوى فوراً
+  // checkAuth يشتغل في الخلفية - لو التوكن انتهى يعمل redirect
+  if (isAuthenticated || hasToken) {
     return <>{children}</>;
   }
 
-  // عرض Loading أثناء التحقق الأولي فقط
+  // ⏳ ما فيه توكن أصلاً - ننتظر checkAuth يخلص
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

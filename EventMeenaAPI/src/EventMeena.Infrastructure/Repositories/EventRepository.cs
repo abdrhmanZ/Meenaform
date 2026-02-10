@@ -51,7 +51,6 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         return await _dbSet
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
-            .Include(e => e.Responses)
             .Include(e => e.SignatureFields)
                 .ThenInclude(sf => sf.Signatures)
             .Where(e => e.UserId == userId)
@@ -72,7 +71,8 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         return await _dbSet
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
-            .Include(e => e.Responses)
+            .Include(e => e.SignatureFields)
+                .ThenInclude(sf => sf.Signatures)
             .Where(e => e.UserId == userId && e.Status == status)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -91,7 +91,8 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         return await _dbSet
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
-            .Include(e => e.Responses)
+            .Include(e => e.SignatureFields)
+                .ThenInclude(sf => sf.Signatures)
             .Where(e => e.UserId == userId && e.Type == type)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -154,20 +155,34 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         return await query.CountAsync();
     }
 
+    public async Task<(int currentCount, int previousCount)> GetEventsCountForPeriodsAsync(
+        Guid userId, DateTime currentStart, DateTime currentEnd, DateTime previousStart, DateTime previousEnd)
+    {
+        var counts = await _dbSet
+            .Where(e => e.UserId == userId)
+            .GroupBy(e => 1)
+            .Select(g => new
+            {
+                CurrentCount = g.Count(e => e.CreatedAt >= currentStart && e.CreatedAt <= currentEnd),
+                PreviousCount = g.Count(e => e.CreatedAt >= previousStart && e.CreatedAt <= previousEnd)
+            })
+            .FirstOrDefaultAsync();
+
+        return counts != null ? (counts.CurrentCount, counts.PreviousCount) : (0, 0);
+    }
+
     public async Task<(IReadOnlyList<Event> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize)
     {
-        var query = _dbSet
+        var totalCount = await _dbSet.CountAsync(e => e.UserId == userId);
+
+        // لا نجلب Responses لأنها ثقيلة (AnswersJson كبير) - نجلب العدد بشكل منفصل
+        var items = await _dbSet
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
-            .Include(e => e.Responses)
             .Include(e => e.SignatureFields)
                 .ThenInclude(sf => sf.Signatures)
             .Where(e => e.UserId == userId)
-            .OrderByDescending(e => e.CreatedAt);
-
-        var totalCount = await _dbSet.CountAsync(e => e.UserId == userId);
-
-        var items = await query
+            .OrderByDescending(e => e.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

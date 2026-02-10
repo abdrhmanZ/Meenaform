@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
@@ -49,8 +49,18 @@ function EventDetailsPageContent() {
   const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
 
+  const hasFetched = useRef(false);
+
+  // ✅ لو الحدث موجود في الـ events list، نعرضه فوراً بدون انتظار
+  const cachedEvent = useMemo(
+    () => events.find((e) => e.id === eventId),
+    [events, eventId]
+  );
+  const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
+
   useEffect(() => {
-    if (eventId) {
+    if (eventId && !hasFetched.current) {
+      hasFetched.current = true;
       fetchEventById(eventId);
       fetchContacts();
       fetchGroups();
@@ -156,11 +166,12 @@ function EventDetailsPageContent() {
     setShowSendDialog(true);
   };
 
-  if (isLoading || !currentEvent) {
+  // ✅ نعرض loading بس لو ما فيه أي بيانات للحدث أبداً
+  if (!displayEvent) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingState message="جاري تحميل تفاصيل الحدث..." />
+          <LoadingState variant="details" />
         </div>
       </DashboardLayout>
     );
@@ -170,7 +181,7 @@ function EventDetailsPageContent() {
     <DashboardLayout>
       {/* Header */}
       <EventDetailsHeader
-        event={currentEvent}
+        event={displayEvent}
         onDuplicate={handleDuplicate}
         onArchive={handleArchive}
         onDelete={() => setDeleteDialogOpen(true)}
@@ -183,7 +194,7 @@ function EventDetailsPageContent() {
       {/* المحتوى */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* تنبيه المسودة */}
-        {currentEvent.status === "draft" && (
+        {displayEvent.status === "draft" && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
@@ -204,7 +215,7 @@ function EventDetailsPageContent() {
           {/* Left Column - Event Info & Sections/Fields */}
           <div className="lg:col-span-2 space-y-6">
             {/* Event Info - مختلف حسب نوع الحدث */}
-            {currentEvent.type === "document_signing" && documentSigningEvent ? (
+            {displayEvent.type === "document_signing" && documentSigningEvent ? (
               <>
                 <DocumentInfoCard event={documentSigningEvent} />
                 <DocumentFieldsDisplay
@@ -214,8 +225,8 @@ function EventDetailsPageContent() {
               </>
             ) : (
               <>
-                <EventInfoCard event={currentEvent} />
-                <EventSectionsDisplay event={currentEvent} />
+                <EventInfoCard event={displayEvent} />
+                <EventSectionsDisplay event={displayEvent} />
               </>
             )}
           </div>
@@ -223,10 +234,10 @@ function EventDetailsPageContent() {
           {/* Right Column - QR Code & Public Link */}
           <div className="space-y-6">
             {/* QR Code */}
-            <EventQRCode shareCode={currentEvent.shareCode || ""} eventTitle={currentEvent.title} />
+            <EventQRCode shareCode={displayEvent.shareCode || ""} eventTitle={displayEvent.title} />
 
             {/* Public Link */}
-            <EventPublicLink shareCode={currentEvent.shareCode || ""} />
+            <EventPublicLink shareCode={displayEvent.shareCode || ""} />
           </div>
         </div>
       </div>
@@ -236,7 +247,7 @@ function EventDetailsPageContent() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDelete}
-        eventTitle={currentEvent.title}
+        eventTitle={displayEvent.title}
       />
 
       {/* Send Event Dialog */}
@@ -244,13 +255,13 @@ function EventDetailsPageContent() {
         open={showSendDialog}
         onClose={() => setShowSendDialog(false)}
         eventId={eventId}
-        eventTitle={currentEvent.title}
+        eventTitle={displayEvent.title}
         eventUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}`}
       />
 
       {/* Save As Template Dialog */}
       <SaveAsTemplateDialog
-        event={currentEvent}
+        event={displayEvent}
         open={saveAsTemplateDialogOpen}
         onOpenChange={setSaveAsTemplateDialogOpen}
       />

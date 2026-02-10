@@ -88,24 +88,15 @@ export default function EventParticipatePage() {
 
   // التحقق من معلومات المشارك المحفوظة
   useEffect(() => {
-    console.log("🔍 Checking participant info...");
-    console.log("currentEvent:", currentEvent);
-    console.log("requireAuth:", currentEvent?.settings.requireAuth);
-    console.log("isPrivate:", currentEvent?.settings.isPrivate);
-    console.log("user:", user);
-
     // نعرض النموذج إذا كان الحدث يتطلب تسجيل أو كان خاص
     const needsAuth = currentEvent?.settings.requireAuth || currentEvent?.settings.isPrivate;
 
     if (needsAuth && !user) {
-      console.log("✅ Auth/Private required and no user logged in");
       const savedInfo = localStorage.getItem("participantInfo");
-      console.log("savedInfo from localStorage:", savedInfo);
 
       if (savedInfo) {
         try {
           const info = JSON.parse(savedInfo);
-          console.log("✅ Found saved participant info:", info);
 
           // للحدث الخاص، نتحقق أيضاً من الوصول المحفوظ
           if (currentEvent?.settings.isPrivate) {
@@ -133,15 +124,12 @@ export default function EventParticipatePage() {
             setShowParticipantForm(false);
           }
         } catch (e) {
-          console.log("❌ Error parsing saved info, showing form");
           setShowParticipantForm(true);
         }
       } else {
-        console.log("❌ No saved info, showing form");
         setShowParticipantForm(true);
       }
     } else {
-      console.log("❌ Auth not required or user is logged in");
       setShowParticipantForm(false);
     }
   }, [currentEvent, user]);
@@ -273,15 +261,7 @@ export default function EventParticipatePage() {
     !user &&
     showParticipantForm;
 
-  console.log("🎯 Checking if should show ParticipantInfoForm:");
-  console.log("  - requireAuth:", currentEvent.settings.requireAuth);
-  console.log("  - isPrivate:", currentEvent.settings.isPrivate);
-  console.log("  - user:", user);
-  console.log("  - showParticipantForm:", showParticipantForm);
-  console.log("  - Final condition:", needsParticipantForm);
-
   if (needsParticipantForm) {
-    console.log("✅ SHOWING ParticipantInfoForm!");
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <ParticipateHeader creatorName={currentEvent.userId || ""} />
@@ -296,8 +276,6 @@ export default function EventParticipatePage() {
       </div>
     );
   }
-
-  console.log("❌ NOT showing ParticipantInfoForm, showing event instead");
 
   // معالج إرسال التوقيعات
   const handleDocumentSigningSubmit = async (signatures: any[]) => {

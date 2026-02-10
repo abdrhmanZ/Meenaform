@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -43,61 +43,63 @@ function ParticipantDetailsPageContent() {
   const eventId = params.id as string;
   const responseId = params.responseId as string;
 
-  const { currentEvent, fetchEventById, isLoading } = useEventsStore();
+  const { currentEvent, fetchEventById, isLoading, events } = useEventsStore();
   const [response, setResponse] = useState<Response | null>(null);
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [isLoadingResponse, setIsLoadingResponse] = useState(true);
+  const hasFetched = useRef(false);
 
+  // ✅ لو الحدث موجود في الـ events list، نعرضه فوراً
+  const cachedEvent = useMemo(
+    () => events.find((e) => e.id === eventId),
+    [events, eventId]
+  );
+  const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
+
+  // ✅ Parallel: نجلب الحدث + الـ response في نفس الوقت (بدل التسلسل)
   useEffect(() => {
-    if (eventId) {
-      fetchEventById(eventId);
-    }
-  }, [eventId, fetchEventById]);
+    if (!eventId || hasFetched.current) return;
+    hasFetched.current = true;
 
-  // Load response or document signing event based on event type
+    // جلب الحدث والـ response بالتوازي
+    fetchEventById(eventId);
+
+    // جلب الـ response فوراً بدون انتظار الحدث
+    const loadResponseParallel = async () => {
+      setIsLoadingResponse(true);
+      try {
+        const apiResponse = await responsesService.getById(responseId);
+        setResponse(apiResponse);
+      } catch (error) {
+        console.error("Failed to load response:", error);
+        // Fallback: try localStorage for backward compatibility
+        const allResponses = JSON.parse(localStorage.getItem("event_responses") || "[]");
+        const foundResponse = allResponses.find(
+          (r: Response) => r.id === responseId && r.eventId === eventId
+        );
+        setResponse(foundResponse || null);
+      } finally {
+        setIsLoadingResponse(false);
+      }
+    };
+    loadResponseParallel();
+  }, [eventId, responseId, fetchEventById]);
+
+  // Load document signing event data when event type is known
   useEffect(() => {
-    if (!currentEvent) return;
-
-    if (currentEvent.type === "document_signing") {
-      // Load document signing event
+    if (currentEvent?.type === "document_signing" && eventId) {
       const loadDocumentSigningEvent = async () => {
         try {
           const docEvent = await documentSigningService.getDocumentEvent(eventId);
           setDocumentSigningEvent(docEvent);
         } catch (error) {
-          console.error("❌ Failed to load document signing event:", error);
+          console.error("Failed to load document signing event:", error);
         }
       };
       loadDocumentSigningEvent();
-    } else {
-      // Load regular response
-      loadResponse();
     }
-  }, [currentEvent, eventId, responseId]);
-
-  const loadResponse = async () => {
-    setIsLoadingResponse(true);
-    try {
-      // Load response from API
-      const apiResponse = await responsesService.getById(responseId);
-      setResponse(apiResponse);
-      console.log("✅ Loaded response from API:", apiResponse.id);
-    } catch (error) {
-      console.error("❌ Failed to load response from API:", error);
-      // Fallback: try localStorage for backward compatibility
-      const allResponses = JSON.parse(localStorage.getItem("event_responses") || "[]");
-      const foundResponse = allResponses.find(
-        (r: Response) => r.id === responseId && r.eventId === eventId
-      );
-      setResponse(foundResponse || null);
-      if (foundResponse) {
-        console.log("⚠️ Using localStorage fallback for response");
-      }
-    } finally {
-      setIsLoadingResponse(false);
-    }
-  };
+  }, [currentEvent?.type, eventId]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -123,19 +125,19 @@ function ParticipantDetailsPageContent() {
     return Monitor;
   };
 
-  // Loading state
-  if (isLoading || !currentEvent) {
+  // Loading state - ننتظر الحدث والـ response يتحملوا بالتوازي
+  if (!displayEvent || (isLoadingResponse && !response)) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingState message="جاري تحميل تفاصيل المشارك..." />
+          <LoadingState variant="participant" />
         </div>
       </DashboardLayout>
     );
   }
 
   // Document Signing Event - Show SignatureDetails
-  if (currentEvent.type === "document_signing") {
+  if (displayEvent.type === "document_signing") {
     return (
       <DashboardLayout>
         {/* Header */}
@@ -150,7 +152,7 @@ function ParticipantDetailsPageContent() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">تفاصيل التوقيع</h1>
-                <p className="text-gray-600 mt-1">{currentEvent.title}</p>
+                <p className="text-gray-600 mt-1">{displayEvent.title}</p>
               </div>
             </div>
           </div>
@@ -177,7 +179,7 @@ function ParticipantDetailsPageContent() {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingState message="جاري تحميل تفاصيل المشارك..." />
+          <LoadingState variant="participant" />
         </div>
       </DashboardLayout>
     );
@@ -208,7 +210,7 @@ function ParticipantDetailsPageContent() {
                 <h1 className="text-2xl font-bold text-gray-900">
                   تفاصيل المشارك
                 </h1>
-                <p className="text-gray-600 mt-1">{currentEvent.title}</p>
+                <p className="text-gray-600 mt-1">{displayEvent.title}</p>
               </div>
             </div>
 
@@ -251,7 +253,7 @@ function ParticipantDetailsPageContent() {
               <h1 className="text-xl font-bold text-gray-900">
                 تفاصيل المشارك
               </h1>
-              <p className="text-sm text-gray-600 mt-1 truncate">{currentEvent.title}</p>
+              <p className="text-sm text-gray-600 mt-1 truncate">{displayEvent.title}</p>
             </div>
           </div>
         </div>
@@ -379,9 +381,9 @@ function ParticipantDetailsPageContent() {
               </p>
             </div>
 
-            <ParticipantAnswers 
-              event={currentEvent} 
-              response={response} 
+            <ParticipantAnswers
+              event={displayEvent}
+              response={response}
             />
           </Card>
         </div>
@@ -391,9 +393,9 @@ function ParticipantDetailsPageContent() {
       <ExportPDFDialog
         open={showExportDialog}
         onOpenChange={setShowExportDialog}
-        eventTitle={currentEvent.title}
+        eventTitle={displayEvent.title}
         responses={[response]} // Single participant
-        components={currentEvent.sections.flatMap(section => section.components)}
+        components={displayEvent.sections?.flatMap(section => section.components) ?? []}
         isSingleParticipant={true}
       />
     </DashboardLayout>

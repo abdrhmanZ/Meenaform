@@ -401,47 +401,7 @@ const DraggableTitle = ({
   const [currentPosition, setCurrentPosition] = useState(element.position);
   const [isDragging, setIsDragging] = useState(false);
 
-  // 🔍 DEBUG: Log render
-  console.log('🎨 [RENDER] DraggableTitle:', {
-    elementId: element.id,
-    elementSize: element.size,
-    isResizing,
-    resizingSize,
-    computedWidth: isResizing ? resizingSize.width : element.size.width,
-    computedHeight: isResizing ? resizingSize.height : element.size.height,
-    isSelected,
-  });
 
-  // 🔍 DEBUG: Check if resize handles exist in DOM
-  React.useEffect(() => {
-    console.log('🔍 [useEffect] Running DOM check:', {
-      elementId: element.id,
-      isSelected,
-      nodeRefExists: !!nodeRef.current,
-    });
-
-    if (isSelected && nodeRef.current) {
-      // Wait for next tick to ensure Resizable has rendered
-      setTimeout(() => {
-        const resizableDiv = nodeRef.current?.querySelector('.react-resizable');
-        const handles = nodeRef.current?.querySelectorAll('.react-resizable-handle');
-
-        console.log('🎯 [DOM CHECK] Resize handles found:', {
-          elementId: element.id,
-          resizableDivExists: !!resizableDiv,
-          handleCount: handles?.length || 0,
-          handles: handles ? Array.from(handles).map(h => ({
-            className: h.className,
-            computedStyle: window.getComputedStyle(h as HTMLElement),
-            pointerEvents: window.getComputedStyle(h as HTMLElement).pointerEvents,
-            opacity: window.getComputedStyle(h as HTMLElement).opacity,
-            zIndex: window.getComputedStyle(h as HTMLElement).zIndex,
-            display: window.getComputedStyle(h as HTMLElement).display,
-          })) : [],
-        });
-      }, 100);
-    }
-  }, [isSelected, element.id]);
 
   // Calculate warnings based on current position (during drag) or element position (static)
   const activePosition = isDragging ? currentPosition : element.position;
@@ -505,40 +465,14 @@ const DraggableTitle = ({
               width={isResizing ? resizingSize.width : element.size.width}
               height={isResizing ? resizingSize.height : element.size.height}
               onResize={(e, {size}) => {
-                console.log('🔵 [onResize] Title resize started:', {
-                  elementId: element.id,
-                  originalSize: size,
-                  snappedWidth: Math.round(size.width / 10) * 10,
-                  snappedHeight: Math.round(size.height / 10) * 10,
-                  event: e.type,
-                });
-
                 setIsResizing(true);
                 // Apply grid snapping for smoother, faster resize (10px increments)
                 const snappedWidth = Math.round(size.width / 10) * 10;
                 const snappedHeight = Math.round(size.height / 10) * 10;
                 setResizingSize({ width: snappedWidth, height: snappedHeight });
-
-                console.log('🟢 [onResize] State updated:', {
-                  isResizing: true,
-                  resizingSize: { width: snappedWidth, height: snappedHeight }
-                });
               }}
-              onResizeStart={(e, {size}) => {
-                console.log('🟡 [onResizeStart] Title resize starting:', {
-                  elementId: element.id,
-                  initialSize: size,
-                  event: e.type,
-                });
-              }}
+              onResizeStart={() => {}}
               onResizeStop={(e, data) => {
-                console.log('🔴 [onResizeStop] Title resize stopped:', {
-                  elementId: element.id,
-                  finalSize: data.size,
-                  snappedWidth: Math.round(data.size.width / 10) * 10,
-                  snappedHeight: Math.round(data.size.height / 10) * 10,
-                });
-
                 setIsResizing(false);
                 // Apply grid snapping to final size
                 const snappedWidth = Math.round(data.size.width / 10) * 10;

@@ -229,7 +229,6 @@ export function InteractivePDFRenderer({
     if (editingHeader && sampleData) {
       // Note: In a real app, you would update the event title in the parent component
       // For now, we just close the editing mode
-      console.log('Header content updated:', headerContent);
     }
     setEditingHeader(false);
     setHeaderContent('');

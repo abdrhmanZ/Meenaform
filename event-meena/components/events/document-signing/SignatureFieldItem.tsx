@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   PenTool,
@@ -36,6 +36,15 @@ const fieldTypeConfig: Record<SignatureFieldType, { icon: any; label: string; co
   checkbox: { icon: CheckSquare, label: "اختيار", color: "text-green-600", bgColor: "bg-green-50 border-green-300" },
 };
 
+// ✅ Helper: استخراج إحداثيات من mouse أو touch event
+function getClientXY(e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): { clientX: number; clientY: number } {
+  if ("touches" in e) {
+    const touch = e.touches[0] || (e as TouchEvent).changedTouches?.[0];
+    return { clientX: touch?.clientX ?? 0, clientY: touch?.clientY ?? 0 };
+  }
+  return { clientX: (e as MouseEvent).clientX, clientY: (e as MouseEvent).clientY };
+}
+
 export default function SignatureFieldItem({
   field,
   isSelected,
@@ -49,7 +58,7 @@ export default function SignatureFieldItem({
 }: SignatureFieldItemProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const fieldRef = useRef<HTMLDivElement>(null);
 
   const config = fieldTypeConfig[field.fieldType];
@@ -61,58 +70,95 @@ export default function SignatureFieldItem({
   const pixelWidth = (field.width / 100) * containerWidth;
   const pixelHeight = (field.height / 100) * containerHeight;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // ✅ بداية السحب (mouse + touch)
+  const startDrag = useCallback((clientX: number, clientY: number) => {
     onSelect();
     setIsDragging(true);
-    setDragStart({ x: e.clientX - pixelX, y: e.clientY - pixelY });
+    dragStartRef.current = { x: clientX - pixelX, y: clientY - pixelY };
+  }, [onSelect, pixelX, pixelY]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    startDrag(e.clientX, e.clientY);
   };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    const { clientX, clientY } = getClientXY(e);
+    startDrag(clientX, clientY);
+  };
+
+  // ✅ بداية تغيير الحجم (mouse + touch)
+  const startResize = useCallback((clientX: number, clientY: number) => {
+    setIsResizing(true);
+    dragStartRef.current = { x: clientX, y: clientY };
+  }, []);
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsResizing(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
+    startResize(e.clientX, e.clientY);
+  };
+
+  const handleResizeTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    const { clientX, clientY } = getClientXY(e);
+    startResize(clientX, clientY);
   };
 
   useEffect(() => {
     if (!isDragging && !isResizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    // ✅ حركة موحدة لـ mouse و touch
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      // منع scroll الصفحة أثناء السحب على الموبايل
+      if ("touches" in e) e.preventDefault();
+
+      const { clientX, clientY } = getClientXY(e);
+      const dragStart = dragStartRef.current;
+
       if (isDragging) {
-        const newX = Math.max(0, Math.min(containerWidth - pixelWidth, e.clientX - dragStart.x));
-        const newY = Math.max(0, Math.min(containerHeight - pixelHeight, e.clientY - dragStart.y));
-        
+        const newX = Math.max(0, Math.min(containerWidth - pixelWidth, clientX - dragStart.x));
+        const newY = Math.max(0, Math.min(containerHeight - pixelHeight, clientY - dragStart.y));
+
         onUpdate({
           positionX: (newX / containerWidth) * 100,
           positionY: (newY / containerHeight) * 100,
         });
       } else if (isResizing) {
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
+        const deltaX = clientX - dragStart.x;
+        const deltaY = clientY - dragStart.y;
         const newWidth = Math.max(50, pixelWidth + deltaX);
         const newHeight = Math.max(30, pixelHeight + deltaY);
-        
+
         onUpdate({
           width: Math.min((newWidth / containerWidth) * 100, 100 - field.positionX),
           height: Math.min((newHeight / containerHeight) * 100, 100 - field.positionY),
         });
-        setDragStart({ x: e.clientX, y: e.clientY });
+        dragStartRef.current = { x: clientX, y: clientY };
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       setIsDragging(false);
       setIsResizing(false);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    // ✅ Mouse events
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+    // ✅ Touch events (passive: false عشان نقدر نعمل preventDefault)
+    document.addEventListener("touchmove", handleMove, { passive: false });
+    document.addEventListener("touchend", handleEnd);
+    document.addEventListener("touchcancel", handleEnd);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleEnd);
+      document.removeEventListener("touchmove", handleMove);
+      document.removeEventListener("touchend", handleEnd);
+      document.removeEventListener("touchcancel", handleEnd);
     };
-  }, [isDragging, isResizing, dragStart, containerWidth, containerHeight, pixelWidth, pixelHeight, field.positionX, field.positionY, onUpdate]);
+  }, [isDragging, isResizing, containerWidth, containerHeight, pixelWidth, pixelHeight, field.positionX, field.positionY, onUpdate]);
 
   return (
     <div
@@ -132,6 +178,7 @@ export default function SignatureFieldItem({
         height: pixelHeight,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
@@ -186,12 +233,13 @@ export default function SignatureFieldItem({
             </Button>
           </div>
 
-          {/* Resize Handle */}
+          {/* Resize Handle - أكبر على الموبايل عشان يكون سهل اللمس */}
           <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-primary rounded-br-lg rounded-tl-lg flex items-center justify-center"
+            className="absolute bottom-0 right-0 w-6 h-6 md:w-4 md:h-4 cursor-se-resize bg-primary rounded-br-lg rounded-tl-lg flex items-center justify-center touch-none"
             onMouseDown={handleResizeMouseDown}
+            onTouchStart={handleResizeTouchStart}
           >
-            <GripVertical className="w-2 h-2 text-white rotate-45" />
+            <GripVertical className="w-3 h-3 md:w-2 md:h-2 text-white rotate-45" />
           </div>
         </>
       )}

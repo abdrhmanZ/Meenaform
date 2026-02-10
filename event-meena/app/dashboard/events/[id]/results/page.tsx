@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -41,7 +41,7 @@ function ResultsPageContent() {
   const router = useRouter();
   const eventId = params.id as string;
 
-  const { currentEvent, fetchEventById, isLoading } = useEventsStore();
+  const { currentEvent, fetchEventById, isLoading, events } = useEventsStore();
   const [responses, setResponses] = useState<Response[]>([]);
   const [filteredResponses, setFilteredResponses] = useState<Response[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,8 +52,18 @@ function ResultsPageContent() {
   // Document Signing specific state
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
 
+  const hasFetched = useRef(false);
+
+  // ✅ لو الحدث موجود في الـ events list، نعرضه فوراً
+  const cachedEvent = useMemo(
+    () => events.find((e) => e.id === eventId),
+    [events, eventId]
+  );
+  const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
+
   useEffect(() => {
-    if (eventId) {
+    if (eventId && !hasFetched.current) {
+      hasFetched.current = true;
       fetchEventById(eventId);
       loadResponses();
     }
@@ -85,7 +95,7 @@ function ResultsPageContent() {
       );
       setResponses(completedResponses);
       setFilteredResponses(completedResponses);
-      console.log("✅ Loaded", completedResponses.length, "responses from API");
+
     } catch (error) {
       console.error("❌ Failed to load responses from API:", error);
       // Fallback: try localStorage for backward compatibility
@@ -95,7 +105,7 @@ function ResultsPageContent() {
       );
       setResponses(eventResponses);
       setFilteredResponses(eventResponses);
-      console.log("⚠️ Using localStorage fallback:", eventResponses.length, "responses");
+
     } finally {
       setIsLoadingResponses(false);
     }
@@ -134,11 +144,12 @@ function ResultsPageContent() {
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (isLoading || !currentEvent) {
+  // ✅ نعرض loading بس لو ما فيه أي بيانات للحدث أبداً
+  if (!displayEvent) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingState message="جاري تحميل النتائج..." />
+          <LoadingState variant="results" />
         </div>
       </DashboardLayout>
     );
@@ -166,12 +177,12 @@ function ResultsPageContent() {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                   نتائج الحدث
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{currentEvent.title}</p>
+                <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{displayEvent.title}</p>
               </div>
             </div>
 
             {/* Export Buttons - Only for non-document-signing events */}
-            {currentEvent.type !== "document_signing" && (
+            {displayEvent.type !== "document_signing" && (
               <div className="flex items-center gap-2 sm:gap-3">
                 <Button
                   variant="outline"
@@ -200,7 +211,7 @@ function ResultsPageContent() {
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Document Signing Results */}
-        {currentEvent.type === "document_signing" ? (
+        {displayEvent.type === "document_signing" ? (
           documentSigningEvent ? (
             <DocumentSigningResults
               event={documentSigningEvent}
@@ -375,23 +386,23 @@ function ResultsPageContent() {
       </div>
 
       {/* Export PDF Dialog - Only for non-document-signing events */}
-      {currentEvent.type !== "document_signing" && (
+      {displayEvent.type !== "document_signing" && (
         <>
           <ExportPDFDialog
             open={showExportDialog}
             onOpenChange={setShowExportDialog}
-            eventTitle={currentEvent.title}
+            eventTitle={displayEvent.title}
             responses={responses}
-            components={currentEvent.sections.flatMap((section) => section.components)}
+            components={displayEvent.sections?.flatMap((section) => section.components) || []}
           />
 
           <ExportExcelDialog
             open={showExcelExportDialog}
             onOpenChange={setShowExcelExportDialog}
-            eventTitle={currentEvent.title}
+            eventTitle={displayEvent.title}
             responses={responses}
-            components={currentEvent.sections.flatMap((section) => section.components)}
-            isQuiz={currentEvent.type === "quiz"}
+            components={displayEvent.sections?.flatMap((section) => section.components) || []}
+            isQuiz={displayEvent.type === "quiz"}
           />
         </>
       )}

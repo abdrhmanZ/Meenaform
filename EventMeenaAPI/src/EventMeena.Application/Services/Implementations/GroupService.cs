@@ -43,14 +43,9 @@ public class GroupService : IGroupService
 
     public async Task<ApiResponse<List<GroupDto>>> GetUserGroupsAsync(Guid userId)
     {
+        // GetByUserIdAsync already includes ContactGroups, so AutoMapper calculates ContactCount from src.ContactGroups.Count
         var groups = await _unitOfWork.Groups.GetByUserIdAsync(userId);
         var dtos = _mapper.Map<List<GroupDto>>(groups);
-
-        foreach (var dto in dtos)
-        {
-            dto.ContactCount = await _unitOfWork.Groups.GetContactCountAsync(dto.Id);
-        }
-
         return ApiResponse<List<GroupDto>>.SuccessResponse(dtos);
     }
 

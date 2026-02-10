@@ -97,7 +97,7 @@ function EventsPageContent() {
         <EventsPageHeader />
         <EventsFilters />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingState message="جاري تحميل الأحداث..." />
+          <LoadingState variant="events" />
         </div>
       </DashboardLayout>
     );

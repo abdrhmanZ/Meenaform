@@ -405,8 +405,6 @@ export async function submitAllSignatures(
     })),
   };
 
-  console.log("Submitting signatures:", backendData); // للتصحيح
-
   const response = await apiClient.post<ApiResponse<BackendDocumentSignatureDto[]>>(
     "/DocumentSigning/sign-all",
     backendData

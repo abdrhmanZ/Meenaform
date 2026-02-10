@@ -104,7 +104,7 @@ function DashboardContent() {
   if (isLoading && events.length === 0) {
     return (
       <DashboardLayout title="لوحة التحكم" description="نظرة عامة على أحداثك">
-        <LoadingState message="جاري تحميل البيانات..." />
+        <LoadingState variant="dashboard" />
       </DashboardLayout>
     );
   }

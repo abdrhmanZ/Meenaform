@@ -32,9 +32,14 @@ public interface IResponseRepository : IGenericRepository<Response>
     Task<int> GetCompletedResponsesCountAsync(Guid userId, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
-    /// الحصول على جميع الردود لإيميل معين مع تفاصيل الحدث
+    /// الحصول على جميع الردود لإيميل معين مع تفاصيل الحدث (بدون Sections/Components)
     /// </summary>
     Task<IReadOnlyList<Response>> GetByRespondentEmailWithEventAsync(string email);
+
+    /// <summary>
+    /// الحصول على رد واحد بالـ ID مع تفاصيل الحدث الكاملة (Sections + Components)
+    /// </summary>
+    Task<Response?> GetByIdWithEventDetailsAsync(Guid responseId);
 
     /// <summary>
     /// الحصول على الردود مع pagination على مستوى قاعدة البيانات
@@ -45,5 +50,16 @@ public interface IResponseRepository : IGenericRepository<Response>
     /// الحصول على متوسط نسبة الإكمال لعدة أحداث دفعة واحدة
     /// </summary>
     Task<Dictionary<Guid, double>> GetBulkCompletionRatesAsync(IEnumerable<Guid> eventIds);
+
+    /// <summary>
+    /// الحصول على عدد الردود المكتملة لفترتين مختلفتين في استعلام واحد (للمقارنة)
+    /// </summary>
+    Task<(int currentCount, int previousCount)> GetCompletedResponsesCountForPeriodsAsync(
+        Guid userId, DateTime currentStart, DateTime currentEnd, DateTime previousStart, DateTime previousEnd);
+
+    /// <summary>
+    /// الحصول على عدد الردود المكتملة لمجموعة أحداث دفعة واحدة
+    /// </summary>
+    Task<Dictionary<Guid, int>> GetBulkCompletedCountsAsync(IEnumerable<Guid> eventIds);
 }
 

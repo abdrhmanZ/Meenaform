@@ -96,7 +96,7 @@ function ParticipationsPageContent() {
   });
 
   if (isLoading) {
-    return <LoadingState message="جاري تحميل مشاركاتك..." />;
+    return <LoadingState variant="events" />;
   }
 
   return (

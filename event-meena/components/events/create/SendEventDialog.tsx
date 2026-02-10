@@ -138,8 +138,6 @@ export default function SendEventDialog({
         sendMethod: "email",
       });
 
-      console.log("📧 Send Event Response:", response);
-
       // عرض رسالة النجاح مع تفاصيل الإرسال
       const successCount = response.successCount ?? response.successfulSends ?? 0;
       const failureCount = response.failureCount ?? response.failedSends ?? 0;

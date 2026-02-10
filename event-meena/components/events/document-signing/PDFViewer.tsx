@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,6 +18,9 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+// ✅ Cache لتذكر الملفات اللي اتحملت قبل كده + عدد صفحاتها
+const loadedPDFs = new Map<string, number>();
 
 interface PDFViewerProps {
   fileUrl: string;
@@ -42,19 +45,28 @@ export default function PDFViewer({
   className,
   children,
 }: PDFViewerProps) {
-  const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedPages = loadedPDFs.get(fileUrl);
+  const [totalPages, setTotalPages] = useState(cachedPages || 0);
+  const [isLoading, setIsLoading] = useState(!cachedPages);
   const [error, setError] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
+  // ✅ لو الملف اتحمل قبل كده، نبلّغ الـ parent بعدد الصفحات فوراً
+  useEffect(() => {
+    if (cachedPages) {
+      onTotalPagesChange(cachedPages);
+    }
+  }, [cachedPages, onTotalPagesChange]);
+
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    loadedPDFs.set(fileUrl, numPages);
     setTotalPages(numPages);
     onTotalPagesChange(numPages);
     setIsLoading(false);
     setError(null);
-  }, [onTotalPagesChange]);
+  }, [onTotalPagesChange, fileUrl]);
 
   const onDocumentLoadError = useCallback((err: Error) => {
     console.error("PDF load error:", err);

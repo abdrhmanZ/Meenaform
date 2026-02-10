@@ -165,17 +165,27 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
     public async Task<IReadOnlyList<Response>> GetByRespondentEmailWithEventAsync(string email)
     {
+        // List view: only need Event basic info + User name, no Sections/Components
         return await _dbSet
             .Include(r => r.Event)
                 .ThenInclude(e => e.User)
-            .Include(r => r.Event)
-                .ThenInclude(e => e.Sections)
-                    .ThenInclude(s => s.Components)
             .Where(r => r.RespondentEmail != null &&
                        r.RespondentEmail == email &&
                        r.Status == ResponseStatus.Completed)
             .OrderByDescending(r => r.CompletedAt ?? r.CreatedAt)
             .ToListAsync();
+    }
+
+    public async Task<Response?> GetByIdWithEventDetailsAsync(Guid responseId)
+    {
+        // Details view: need full Event with Sections + Components
+        return await _dbSet
+            .Include(r => r.Event)
+                .ThenInclude(e => e.User)
+            .Include(r => r.Event)
+                .ThenInclude(e => e.Sections.OrderBy(s => s.Order))
+                    .ThenInclude(s => s.Components.OrderBy(c => c.Order))
+            .FirstOrDefaultAsync(r => r.Id == responseId);
     }
 
     public async Task<(IReadOnlyList<Response> Items, int TotalCount)> GetByEventIdPagedAsync(Guid eventId, int pageNumber, int pageSize)
@@ -211,6 +221,35 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
             s => s.EventId,
             s => s.Total > 0 ? (double)s.Completed / s.Total * 100 : 0
         );
+    }
+
+    public async Task<(int currentCount, int previousCount)> GetCompletedResponsesCountForPeriodsAsync(
+        Guid userId, DateTime currentStart, DateTime currentEnd, DateTime previousStart, DateTime previousEnd)
+    {
+        var counts = await _dbSet
+            .Where(r => r.Event.UserId == userId && r.Status == ResponseStatus.Completed && r.CompletedAt.HasValue)
+            .GroupBy(r => 1)
+            .Select(g => new
+            {
+                CurrentCount = g.Count(r => r.CompletedAt!.Value >= currentStart && r.CompletedAt!.Value <= currentEnd),
+                PreviousCount = g.Count(r => r.CompletedAt!.Value >= previousStart && r.CompletedAt!.Value <= previousEnd)
+            })
+            .FirstOrDefaultAsync();
+
+        return counts != null ? (counts.CurrentCount, counts.PreviousCount) : (0, 0);
+    }
+
+    public async Task<Dictionary<Guid, int>> GetBulkCompletedCountsAsync(IEnumerable<Guid> eventIds)
+    {
+        var eventIdList = eventIds.ToList();
+
+        var counts = await _dbSet
+            .Where(r => eventIdList.Contains(r.EventId) && r.Status == ResponseStatus.Completed)
+            .GroupBy(r => r.EventId)
+            .Select(g => new { EventId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.EventId, c => c.Count);
     }
 }
 

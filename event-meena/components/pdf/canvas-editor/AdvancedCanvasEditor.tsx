@@ -187,10 +187,6 @@ export function AdvancedCanvasEditor({
   
   // Add initial content (header, tables, custom overlays)
   const addInitialContent = useCallback(async (canvas: any) => {
-    console.log('🎨 Full Settings:', settings);
-    console.log('🎨 Settings colors:', settings.colors);
-    console.log('📊 Number of tables:', data.tables.length);
-
     // Convert margins from mm to pixels
     const mmToPx = 3.7795;
     const margins = {
@@ -222,30 +218,19 @@ export function AdvancedCanvasEditor({
     // Add tables
     for (let index = 0; index < data.tables.length; index++) {
       const table = data.tables[index];
-      console.log(`📊 Adding table ${index + 1}/${data.tables.length}: ${table.title}`);
-      console.log(`   Position Y: ${currentY}`);
-      console.log(`   Rows: ${table.rows.length}`);
-
       try {
         // Generate HTML for table (same as preview)
         const tableHTML = generateTableHTML(table, settings);
-        console.log(`   📝 Generated HTML`);
 
         // Convert HTML to image
         const tableImageURL = await convertTableHTMLToImage(tableHTML, settings);
-        console.log(`   🖼️ Converted to image`);
 
         // Add image to canvas
         await new Promise<void>((resolve, reject) => {
-          console.log(`   🔄 Loading image into canvas...`);
-          console.log(`   🖼️ Image URL length: ${tableImageURL.length}`);
-
           const img = new Image();
           img.crossOrigin = 'anonymous';
 
           img.onload = () => {
-            console.log(`   ✅ Image loaded successfully: ${img.width}x${img.height}`);
-
             const fabricImg = new fabric.Image(img, {
               left: margins.left,
               top: currentY,
@@ -255,8 +240,6 @@ export function AdvancedCanvasEditor({
 
             const tableWidth = pageWidth - margins.left - margins.right;
             const scale = tableWidth / (fabricImg.width || 1);
-
-            console.log(`   📐 Scale: ${scale}, Target width: ${tableWidth}`);
 
             fabricImg.set({
               scaleX: scale,
@@ -268,7 +251,6 @@ export function AdvancedCanvasEditor({
             (fabricImg as any).name = table.title;
             (fabricImg as any).type = 'table-image';
 
-            console.log(`   ➕ Adding image to canvas at (${margins.left}, ${currentY})`);
             canvas.add(fabricImg);
             canvas.renderAll();
 
@@ -276,8 +258,6 @@ export function AdvancedCanvasEditor({
             const tableHeight = (fabricImg.height || 0) * scale;
             currentY += tableHeight + (settings.spacing?.tableSeparation || 30);
 
-            console.log(`   ✅ Table added as image, height: ${tableHeight}`);
-            console.log(`   📊 Canvas objects count: ${canvas.getObjects().length}`);
             resolve();
           };
 
@@ -294,7 +274,6 @@ export function AdvancedCanvasEditor({
     }
 
     canvas.renderAll();
-    console.log('✅ All tables added successfully');
 
     // Add custom text overlays
     settings.customTextOverlays?.forEach((overlay) => {

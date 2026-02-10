@@ -48,12 +48,7 @@ class PerformanceMonitor {
     const duration = performance.now() - startTime;
     this.metrics.delete(label);
 
-    // Log if duration is significant (> 100ms)
-    if (duration > 100) {
-      console.warn(`⚠️ Performance: "${label}" took ${duration.toFixed(2)}ms`);
-    } else {
-      console.log(`✓ Performance: "${label}" took ${duration.toFixed(2)}ms`);
-    }
+
 
     return duration;
   }
@@ -71,8 +66,6 @@ class PerformanceMonitor {
       // @ts-ignore
       const totalJSHeapSize = performance.memory.totalJSHeapSize;
       const percentage = (usedJSHeapSize / totalJSHeapSize) * 100;
-      
-      console.log(`Memory: ${(usedJSHeapSize / 1048576).toFixed(2)}MB / ${(totalJSHeapSize / 1048576).toFixed(2)}MB (${percentage.toFixed(1)}%)`);
       
       return usedJSHeapSize;
     }

@@ -72,14 +72,12 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
 
       // إذا كان الحدث يتطلب معلومات ولم تصل بعد، انتظر
       if (requiresParticipantInfo && !hasParticipantData) {
-        console.log("⏳ Event requires participant info, waiting...");
         waitingForParticipantInfo.current = true;
         return;
       }
 
       // إذا كنا ننتظر معلومات المشارك وجاءت الآن
       if (waitingForParticipantInfo.current && hasParticipantData) {
-        console.log("✅ Participant info received!");
         waitingForParticipantInfo.current = false;
       }
 
@@ -88,10 +86,8 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
 
       try {
         // Start response on backend
-        console.log("📤 Starting response with participant info:", finalParticipantInfo);
         const response = await responsesService.startResponse(event.id, finalParticipantInfo);
         setBackendResponseId(response.id);
-        console.log("✅ Response started:", response.id);
       } catch (error: any) {
         console.error("❌ Failed to start response:", error);
 
@@ -372,24 +368,18 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
 
       // إذا كنا في وضع التعديل، نستخدم updateResponseAnswers
       if (isEditMode && currentResponseId) {
-        console.log("📤 Updating response answers...");
         await responsesService.updateResponseAnswers(currentResponseId, answers);
-        console.log("✅ Response updated successfully!");
         setIsEditMode(false);
       } else {
         // If we don't have a response ID, start one now
         if (!currentResponseId) {
-          console.log("📤 Starting response on backend...");
           const startedResponse = await responsesService.startResponse(event.id, finalParticipantInfo);
           currentResponseId = startedResponse.id;
           setBackendResponseId(currentResponseId);
-          console.log("✅ Response started:", currentResponseId);
         }
 
         // Complete the response with all answers
-        console.log("📤 Completing response with answers:", answers);
         await responsesService.completeResponse(currentResponseId, answers);
-        console.log("✅ Response completed successfully!");
       }
 
       setIsSubmitted(true);
@@ -449,7 +439,6 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
         answers={answers}
         onViewResults={() => {
           // TODO: Navigate to results page
-          console.log("View results");
         }}
         onSubmitAnother={() => {
           if (event.settings.allowMultipleResponses) {

@@ -185,16 +185,12 @@ export const eventsService = {
    * إنشاء حدث جديد (بدون أقسام)
    */
   create: async (data: EventFormData): Promise<Event> => {
-    console.log("🔵 Creating event with data:", data);
     const backendData = mapEventFormToBackend(data);
-    console.log("🔵 Backend data:", backendData);
 
     const response = await apiClient.post<ApiResponse<BackendEventDto>>(
       "/Events",
       backendData
     );
-
-    console.log("🔵 API Response:", response.data);
 
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "فشل إنشاء الحدث");
@@ -208,16 +204,12 @@ export const eventsService = {
    * يُستخدم عند حفظ الحدث من Event Builder
    */
   createWithSections: async (event: Event): Promise<Event> => {
-    console.log("🔵 Creating event with sections:", event);
     const backendData = mapEventWithSectionsToBackend(event);
-    console.log("🔵 Backend data with sections:", backendData);
 
     const response = await apiClient.post<ApiResponse<BackendEventWithFullDetailsDto>>(
       "/Events/with-sections",
       backendData
     );
-
-    console.log("🔵 API Response:", response.data);
 
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "فشل إنشاء الحدث");
@@ -247,16 +239,12 @@ export const eventsService = {
    * يُستخدم عند تعديل الحدث من Event Builder
    */
   updateWithSections: async (id: string, event: Event): Promise<Event> => {
-    console.log("🔵 Updating event with sections:", event);
     const backendData = mapEventWithSectionsToBackend(event);
-    console.log("🔵 Backend data for update:", backendData);
 
     const response = await apiClient.put<ApiResponse<BackendEventWithFullDetailsDto>>(
       `/Events/${id}/with-sections`,
       backendData
     );
-
-    console.log("🔵 Update API Response:", response.data);
 
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "فشل تحديث الحدث");

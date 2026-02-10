@@ -12,13 +12,16 @@ import { ApiError } from "@/lib/api/client";
 // متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
 let pendingAuthCheck: Promise<void> | null = null;
 
+// ✅ Optimistic Auth: لو التوكن موجود، نعتبر المستخدم مسجل مؤقتاً
+const hasToken = typeof window !== "undefined" && !!localStorage.getItem("event_meena_access_token");
+
 // إنشاء Store
 export const useAuthStore = create<AuthState>((set, get) => ({
-  // الحالة الأولية
+  // الحالة الأولية - Optimistic: لو التوكن موجود نعرض الصفحة فوراً
   user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: true, // يبدأ بـ true لمنع التحويل للـ Login قبل التحقق من الجلسة
+  token: hasToken ? localStorage.getItem("event_meena_access_token") : null,
+  isAuthenticated: hasToken, // ✅ نثق بالتوكن مؤقتاً - لو انتهى checkAuth يصححه
+  isLoading: !hasToken, // ✅ loading فقط لو ما فيه توكن أصلاً
   error: null,
 
   // تسجيل الدخول - متصل بـ Backend API
@@ -138,7 +141,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    set({ isLoading: true });
+    // ✅ لا نغير isLoading لو isAuthenticated = true (optimistic)
+    // عشان ما نسبب flash لـ "جاري التحقق من الجلسة"
+    if (!get().isAuthenticated) {
+      set({ isLoading: true });
+    }
 
     // إنشاء promise واحد ومشاركته
     pendingAuthCheck = (async () => {

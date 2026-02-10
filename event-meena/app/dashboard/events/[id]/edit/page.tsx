@@ -14,7 +14,7 @@ import { DocumentSigningEvent } from "@/types/document-signing";
 // Dynamic import for DocumentSigningEditor to avoid SSR issues
 const DocumentSigningEditor = dynamic(
   () => import("@/components/events/document-signing/DocumentSigningEditor"),
-  { ssr: false, loading: () => <LoadingState message="جاري تحميل المحرر..." /> }
+  { ssr: false, loading: () => <LoadingState variant="details" /> }
 );
 
 function EditEventPageContent() {
@@ -125,7 +125,7 @@ function EditEventPageContent() {
   if (isLoading || !currentEvent || isDocumentSigning === null) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingState message="جاري تحميل الحدث..." />
+        <LoadingState variant="details" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ function EditEventPageContent() {
     if (!documentEvent) {
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <LoadingState message="جاري تحميل بيانات الوثيقة..." />
+          <LoadingState variant="details" />
         </div>
       );
     }

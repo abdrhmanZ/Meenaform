@@ -9,6 +9,7 @@ public interface IContactRepository : IGenericRepository<Contact>
 {
     Task<IReadOnlyList<Contact>> GetByUserIdAsync(Guid userId);
     Task<IReadOnlyList<Contact>> GetByUserIdWithGroupsAsync(Guid userId);
+    Task<Contact?> GetByIdWithGroupsAsync(Guid id);
     Task<IReadOnlyList<Contact>> GetByGroupIdAsync(Guid groupId);
     Task<Contact?> GetByEmailAndUserIdAsync(string email, Guid userId);
     Task<bool> ExistsByEmailAndUserIdAsync(string email, Guid userId);

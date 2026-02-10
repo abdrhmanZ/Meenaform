@@ -17,7 +17,6 @@ public class ContactRepository : GenericRepository<Contact>, IContactRepository
     public async Task<IReadOnlyList<Contact>> GetByUserIdAsync(Guid userId)
     {
         return await _dbSet
-            .Include(c => c.SendHistories)
             .Where(c => c.UserId == userId && c.IsActive)
             .OrderBy(c => c.Name)
             .ToListAsync();
@@ -32,6 +31,14 @@ public class ContactRepository : GenericRepository<Contact>, IContactRepository
             .Where(c => c.UserId == userId && c.IsActive)
             .OrderBy(c => c.Name)
             .ToListAsync();
+    }
+
+    public async Task<Contact?> GetByIdWithGroupsAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(c => c.ContactGroups)
+                .ThenInclude(cg => cg.Group)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<IReadOnlyList<Contact>> GetByGroupIdAsync(Guid groupId)

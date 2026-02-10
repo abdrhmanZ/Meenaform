@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DocumentSigningEvent, DocumentSignature, SignatureField } from "@/types/document-signing";
 import { documentSigningService } from "@/lib/api/services";
 import { downloadSignedPdf } from "@/lib/utils/pdfWithSignatures";
@@ -48,6 +48,9 @@ interface MultiSignerInfo {
   signedFieldsCount: number;
 }
 
+// ✅ Cache خارجي لمنع إعادة الجلب عند كل تنقل
+const signaturesCache = new Map<string, DocumentSignature[]>();
+
 interface DocumentSigningResultsProps {
   event: DocumentSigningEvent;
   onViewSignature?: (responseId: string) => void;
@@ -58,24 +61,38 @@ export default function DocumentSigningResults({
   onViewSignature,
 }: DocumentSigningResultsProps) {
   const { toast } = useToast();
-  const [signatures, setSignatures] = useState<DocumentSignature[]>([]);
+  const cached = signaturesCache.get(event.id);
+  const [signatures, setSignatures] = useState<DocumentSignature[]>(cached || []);
   const [signerGroups, setSignerGroups] = useState<SignerGroup[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [filteredGroups, setFilteredGroups] = useState<SignerGroup[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   // للوضع multi-signer
   const isMultiSigner = event.signingMode === "multi";
 
   // جلب التوقيعات
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
+    // ✅ لو البيانات موجودة في الـ cache، نستخدمها مباشرة
+    if (cached) {
+      const groups = groupSignaturesByResponse(cached, event.signatureFields);
+      setSignerGroups(groups);
+      setFilteredGroups(groups);
+      return;
+    }
+
     const fetchSignatures = async () => {
       try {
         setIsLoading(true);
         const data = await documentSigningService.getEventSignatures(event.id);
+        signaturesCache.set(event.id, data);
         setSignatures(data);
 
         // تجميع التوقيعات حسب responseId

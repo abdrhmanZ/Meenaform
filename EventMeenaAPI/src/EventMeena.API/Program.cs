@@ -30,6 +30,7 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseWindowsService();
 builder.Host.UseSerilog();
 
 // ===========================================
@@ -57,7 +58,7 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 {
-    options.Level = CompressionLevel.SmallestSize;
+    options.Level = CompressionLevel.Fastest;
 });
 
 // ===========================================

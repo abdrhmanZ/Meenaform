@@ -32,9 +32,8 @@ public class ContactService : IContactService
 
     public async Task<ApiResponse<ContactWithGroupsDto>> GetByIdWithGroupsAsync(Guid id, Guid userId)
     {
-        var contacts = await _unitOfWork.Contacts.GetByUserIdWithGroupsAsync(userId);
-        var contact = contacts.FirstOrDefault(c => c.Id == id);
-        if (contact == null)
+        var contact = await _unitOfWork.Contacts.GetByIdWithGroupsAsync(id);
+        if (contact == null || contact.UserId != userId)
             return ApiResponse<ContactWithGroupsDto>.FailureResponse("جهة الاتصال غير موجودة");
 
         return ApiResponse<ContactWithGroupsDto>.SuccessResponse(_mapper.Map<ContactWithGroupsDto>(contact));

@@ -290,10 +290,10 @@ public class ResponseService : IResponseService
         if (string.IsNullOrEmpty(email))
             return ApiResponse<ParticipationDetailsDto>.FailureResponse("البريد الإلكتروني مطلوب");
 
-        var responses = await _unitOfWork.Responses.GetByRespondentEmailWithEventAsync(email);
-        var response = responses.FirstOrDefault(r => r.Id == responseId);
+        // Direct query by ID with full event details (Sections + Components)
+        var response = await _unitOfWork.Responses.GetByIdWithEventDetailsAsync(responseId);
 
-        if (response == null)
+        if (response == null || response.RespondentEmail != email || response.Status != Domain.Enums.ResponseStatus.Completed)
             return ApiResponse<ParticipationDetailsDto>.FailureResponse("المشاركة غير موجودة أو لا تملك صلاحية الوصول");
 
         var details = new ParticipationDetailsDto

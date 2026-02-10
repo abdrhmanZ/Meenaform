@@ -67,9 +67,20 @@ public class EventService : IEventService
         // Database-level pagination - يجلب فقط الصفحة المطلوبة من قاعدة البيانات
         var (events, totalCount) = await _unitOfWork.Events.GetByUserIdPagedAsync(userId, pagination.PageNumber, pagination.PageSize);
 
+        // جلب عدد الردود المكتملة بـ COUNT خفيف بدل تحميل كل الـ Responses
+        var eventIds = events.Select(e => e.Id).ToList();
+        var completedCounts = await _unitOfWork.Responses.GetBulkCompletedCountsAsync(eventIds);
+
+        var dtos = _mapper.Map<List<EventListItemDto>>(events);
+        foreach (var dto in dtos)
+        {
+            if (completedCounts.TryGetValue(dto.Id, out var count))
+                dto.CompletedResponseCount = count;
+        }
+
         return ApiResponse<PagedResult<EventListItemDto>>.SuccessResponse(new PagedResult<EventListItemDto>
         {
-            Items = _mapper.Map<List<EventListItemDto>>(events),
+            Items = dtos,
             TotalCount = totalCount,
             PageNumber = pagination.PageNumber,
             PageSize = pagination.PageSize
@@ -78,16 +89,36 @@ public class EventService : IEventService
 
     public async Task<ApiResponse<List<EventListItemDto>>> GetUserEventsByStatusAsync(Guid userId, EventStatus status)
     {
-        // استخدام WithCounts للحصول على عدد الأقسام والمكونات
         var events = await _unitOfWork.Events.GetByUserIdAndStatusWithCountsAsync(userId, status);
-        return ApiResponse<List<EventListItemDto>>.SuccessResponse(_mapper.Map<List<EventListItemDto>>(events));
+
+        var eventIds = events.Select(e => e.Id).ToList();
+        var completedCounts = await _unitOfWork.Responses.GetBulkCompletedCountsAsync(eventIds);
+
+        var dtos = _mapper.Map<List<EventListItemDto>>(events);
+        foreach (var dto in dtos)
+        {
+            if (completedCounts.TryGetValue(dto.Id, out var count))
+                dto.CompletedResponseCount = count;
+        }
+
+        return ApiResponse<List<EventListItemDto>>.SuccessResponse(dtos);
     }
 
     public async Task<ApiResponse<List<EventListItemDto>>> GetUserEventsByTypeAsync(Guid userId, EventType type)
     {
-        // استخدام WithCounts للحصول على عدد الأقسام والمكونات
         var events = await _unitOfWork.Events.GetByUserIdAndTypeWithCountsAsync(userId, type);
-        return ApiResponse<List<EventListItemDto>>.SuccessResponse(_mapper.Map<List<EventListItemDto>>(events));
+
+        var eventIds = events.Select(e => e.Id).ToList();
+        var completedCounts = await _unitOfWork.Responses.GetBulkCompletedCountsAsync(eventIds);
+
+        var dtos = _mapper.Map<List<EventListItemDto>>(events);
+        foreach (var dto in dtos)
+        {
+            if (completedCounts.TryGetValue(dto.Id, out var count))
+                dto.CompletedResponseCount = count;
+        }
+
+        return ApiResponse<List<EventListItemDto>>.SuccessResponse(dtos);
     }
 
     public async Task<ApiResponse<EventDto>> CreateAsync(Guid userId, CreateEventRequest request)
@@ -535,17 +566,17 @@ public class EventService : IEventService
             }
         }
 
-        // حساب نسب التغيير
-        var currentPeriodEvents = await _unitOfWork.Events.GetEventsCountAsync(userId, startOfCurrentPeriod, now);
-        var previousPeriodEvents = await _unitOfWork.Events.GetEventsCountAsync(userId, startOfPreviousPeriod, endOfPreviousPeriod);
+        // حساب نسب التغيير - استعلام واحد بدل 2 لكل نوع
+        var (currentPeriodEvents, previousPeriodEvents) = await _unitOfWork.Events
+            .GetEventsCountForPeriodsAsync(userId, startOfCurrentPeriod, now, startOfPreviousPeriod, endOfPreviousPeriod);
         var eventsChange = CalculatePercentageChange(previousPeriodEvents, currentPeriodEvents);
 
         var currentActiveEvents = events.Count(e => e.Status == EventStatus.Published && e.CreatedAt >= startOfCurrentPeriod);
         var previousActiveEvents = events.Count(e => e.Status == EventStatus.Published && e.CreatedAt >= startOfPreviousPeriod && e.CreatedAt < endOfPreviousPeriod);
         var activeEventsChange = CalculatePercentageChange(previousActiveEvents, currentActiveEvents);
 
-        var currentPeriodResponses = await _unitOfWork.Responses.GetCompletedResponsesCountAsync(userId, startOfCurrentPeriod, now);
-        var previousPeriodResponses = await _unitOfWork.Responses.GetCompletedResponsesCountAsync(userId, startOfPreviousPeriod, endOfPreviousPeriod);
+        var (currentPeriodResponses, previousPeriodResponses) = await _unitOfWork.Responses
+            .GetCompletedResponsesCountForPeriodsAsync(userId, startOfCurrentPeriod, now, startOfPreviousPeriod, endOfPreviousPeriod);
         var responsesChange = CalculatePercentageChange(previousPeriodResponses, currentPeriodResponses);
 
         // بيانات الرسم البياني (آخر 7 أيام)
