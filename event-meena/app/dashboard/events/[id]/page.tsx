@@ -38,7 +38,6 @@ function EventDetailsPageContent() {
     duplicateEvent,
     archiveEvent,
     updateEventStatus,
-    isLoading,
     events,
   } = useEventsStore();
 

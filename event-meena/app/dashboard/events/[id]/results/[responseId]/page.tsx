@@ -43,7 +43,7 @@ function ParticipantDetailsPageContent() {
   const eventId = params.id as string;
   const responseId = params.responseId as string;
 
-  const { currentEvent, fetchEventById, isLoading, events } = useEventsStore();
+  const { currentEvent, fetchEventById, events } = useEventsStore();
   const [response, setResponse] = useState<Response | null>(null);
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);

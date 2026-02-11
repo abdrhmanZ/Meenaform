@@ -41,13 +41,14 @@ function ResultsPageContent() {
   const router = useRouter();
   const eventId = params.id as string;
 
-  const { currentEvent, fetchEventById, isLoading, events } = useEventsStore();
+  const { currentEvent, fetchEventById, events } = useEventsStore();
   const [responses, setResponses] = useState<Response[]>([]);
   const [filteredResponses, setFilteredResponses] = useState<Response[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showExcelExportDialog, setShowExcelExportDialog] = useState(false);
   const [isLoadingResponses, setIsLoadingResponses] = useState(false);
+  const [isLoadingEvent, setIsLoadingEvent] = useState(false);
 
   // Document Signing specific state
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
@@ -61,10 +62,16 @@ function ResultsPageContent() {
   );
   const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
 
+  // ✅ تحميل الحدث والردود بالتوازي - بدون الاعتماد على global isLoading
   useEffect(() => {
     if (eventId && !hasFetched.current) {
       hasFetched.current = true;
-      fetchEventById(eventId);
+
+      // جلب الحدث (local loading state)
+      setIsLoadingEvent(true);
+      fetchEventById(eventId).finally(() => setIsLoadingEvent(false));
+
+      // جلب الردود بالتوازي (لا ننتظر الحدث)
       loadResponses();
     }
   }, [eventId, fetchEventById]);
