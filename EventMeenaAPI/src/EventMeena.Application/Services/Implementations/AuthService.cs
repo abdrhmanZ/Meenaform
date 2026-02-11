@@ -48,7 +48,7 @@ public class AuthService : IAuthService
         };
 
         await _unitOfWork.Users.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        // لا نحفظ هنا - GenerateAuthResponse ستحفظ كل شيء مرة واحدة
 
         return await GenerateAuthResponse(user, "تم إنشاء الحساب بنجاح");
     }
@@ -63,8 +63,7 @@ public class AuthService : IAuthService
             return ApiResponse<AuthResponse>.FailureResponse("الحساب غير مفعل");
 
         user.LastLoginAt = DateTime.UtcNow;
-        _unitOfWork.Users.Update(user);
-        await _unitOfWork.SaveChangesAsync();
+        // لا نحفظ هنا - GenerateAuthResponse ستحفظ كل شيء مرة واحدة
 
         return await GenerateAuthResponse(user, "تم تسجيل الدخول بنجاح");
     }
@@ -209,7 +208,7 @@ public class AuthService : IAuthService
 
     private static string HashPassword(string password)
     {
-        return BCrypt.Net.BCrypt.HashPassword(password);
+        return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 10);
     }
 
     private static bool VerifyPassword(string password, string hash)

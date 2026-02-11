@@ -143,13 +143,12 @@ public class EventService : IEventService
         // توليد ShareCode قبل البدء
         var shareCode = await GenerateUniqueShareCode();
 
-        // بدء Transaction للحماية
-        await _unitOfWork.BeginTransactionAsync();
+        Event? evt = null;
 
-        try
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             // إنشاء الحدث
-            var evt = new Event
+            evt = new Event
             {
                 Title = request.Title,
                 Description = request.Description,
@@ -215,22 +214,13 @@ public class EventService : IEventService
             // حفظ كل شيء مرة واحدة
             await _unitOfWork.Events.AddAsync(evt);
             await _unitOfWork.SaveChangesAsync();
+        });
 
-            // تأكيد Transaction
-            await _unitOfWork.CommitTransactionAsync();
-
-            // الـ evt object يحتوي على كل البيانات بعد SaveChanges (EF Core ملأ الـ IDs)
-            // لا حاجة لـ re-fetch من قاعدة البيانات
-            return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(
-                _mapper.Map<EventWithFullDetailsDto>(evt),
-                "تم إنشاء الحدث بنجاح");
-        }
-        catch (Exception)
-        {
-            // إلغاء كل شيء في حالة الخطأ
-            await _unitOfWork.RollbackTransactionAsync();
-            throw;
-        }
+        // الـ evt object يحتوي على كل البيانات بعد SaveChanges (EF Core ملأ الـ IDs)
+        // لا حاجة لـ re-fetch من قاعدة البيانات
+        return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(
+            _mapper.Map<EventWithFullDetailsDto>(evt!),
+            "تم إنشاء الحدث بنجاح");
     }
 
     public async Task<ApiResponse<EventDto>> UpdateAsync(Guid id, Guid userId, UpdateEventRequest request)

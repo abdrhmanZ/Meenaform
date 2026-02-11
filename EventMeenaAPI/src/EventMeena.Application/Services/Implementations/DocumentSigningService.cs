@@ -34,71 +34,73 @@ public class DocumentSigningService : IDocumentSigningService
     {
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
+            Guid eventId = Guid.Empty;
 
-            // إنشاء الحدث
-            var evt = new Event
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Title = request.Title,
-                Description = request.Description,
-                Type = EventType.DocumentSigning,
-                Status = EventStatus.Draft,
-                DocumentUrl = documentUrl,
-                DocumentFileName = documentFileName,
-                CoverImage = request.CoverImage,
-                ThemeColor = request.ThemeColor,
-                Language = request.Language ?? "ar",
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                RequireLogin = request.RequireLogin,
-                AllowAnonymous = request.AllowAnonymous,
-                MaxResponses = request.MaxResponses,
-                AllowMultipleResponses = request.AllowMultipleResponses,
-                IsPrivate = request.IsPrivate,
-                AllowedEmailsJson = request.AllowedEmails != null
-                    ? JsonSerializer.Serialize(request.AllowedEmails)
-                    : null,
-                AllowDownloadAfterSigning = request.AllowDownloadAfterSigning,
-                SendCopyToSigner = request.SendCopyToSigner,
-                ThankYouMessage = request.ThankYouMessage,
-                ShareCode = GenerateShareCode()
-            };
-
-            await _unitOfWork.Events.AddAsync(evt);
-
-            // إضافة حقول التوقيع
-            var order = 0;
-            foreach (var fieldRequest in request.SignatureFields)
-            {
-                var field = new SignatureField
+                // إنشاء الحدث
+                var evt = new Event
                 {
                     Id = Guid.NewGuid(),
-                    EventId = evt.Id,
-                    Label = fieldRequest.Label,
-                    PageNumber = fieldRequest.PageNumber,
-                    PositionX = fieldRequest.PositionX,
-                    PositionY = fieldRequest.PositionY,
-                    Width = fieldRequest.Width,
-                    Height = fieldRequest.Height,
-                    IsRequired = fieldRequest.IsRequired,
-                    Order = order++,
-                    FieldType = fieldRequest.FieldType,
-                    IncludeDate = fieldRequest.IncludeDate,
-                    IncludeName = fieldRequest.IncludeName
+                    UserId = userId,
+                    Title = request.Title,
+                    Description = request.Description,
+                    Type = EventType.DocumentSigning,
+                    Status = EventStatus.Draft,
+                    DocumentUrl = documentUrl,
+                    DocumentFileName = documentFileName,
+                    CoverImage = request.CoverImage,
+                    ThemeColor = request.ThemeColor,
+                    Language = request.Language ?? "ar",
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    RequireLogin = request.RequireLogin,
+                    AllowAnonymous = request.AllowAnonymous,
+                    MaxResponses = request.MaxResponses,
+                    AllowMultipleResponses = request.AllowMultipleResponses,
+                    IsPrivate = request.IsPrivate,
+                    AllowedEmailsJson = request.AllowedEmails != null
+                        ? JsonSerializer.Serialize(request.AllowedEmails)
+                        : null,
+                    AllowDownloadAfterSigning = request.AllowDownloadAfterSigning,
+                    SendCopyToSigner = request.SendCopyToSigner,
+                    ThankYouMessage = request.ThankYouMessage,
+                    ShareCode = GenerateShareCode()
                 };
-                await _unitOfWork.SignatureFields.AddAsync(field);
-            }
 
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitTransactionAsync();
+                await _unitOfWork.Events.AddAsync(evt);
+                eventId = evt.Id;
 
-            return await GetDocumentEventAsync(evt.Id, userId);
+                // إضافة حقول التوقيع
+                var order = 0;
+                foreach (var fieldRequest in request.SignatureFields)
+                {
+                    var field = new SignatureField
+                    {
+                        Id = Guid.NewGuid(),
+                        EventId = evt.Id,
+                        Label = fieldRequest.Label,
+                        PageNumber = fieldRequest.PageNumber,
+                        PositionX = fieldRequest.PositionX,
+                        PositionY = fieldRequest.PositionY,
+                        Width = fieldRequest.Width,
+                        Height = fieldRequest.Height,
+                        IsRequired = fieldRequest.IsRequired,
+                        Order = order++,
+                        FieldType = fieldRequest.FieldType,
+                        IncludeDate = fieldRequest.IncludeDate,
+                        IncludeName = fieldRequest.IncludeName
+                    };
+                    await _unitOfWork.SignatureFields.AddAsync(field);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            });
+
+            return await GetDocumentEventAsync(eventId, userId);
         }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackTransactionAsync();
             return ApiResponse<EventWithSignatureFieldsDto>.FailureResponse($"حدث خطأ: {ex.Message}");
         }
     }
@@ -109,69 +111,71 @@ public class DocumentSigningService : IDocumentSigningService
     {
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
+            Guid eventId = Guid.Empty;
 
-            // إنشاء الحدث
-            var evt = new Event
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Title = request.Title,
-                Description = request.Description,
-                Type = EventType.DocumentSigning,
-                Status = EventStatus.Published, // Published مباشرة
-                DocumentUrl = request.DocumentUrl,
-                DocumentFileName = request.DocumentFileName,
-                Language = "ar",
-                // إعدادات الوصول
-                RequireLogin = request.RequireLogin,
-                AllowAnonymous = !request.RequireLogin, // عكس RequireLogin
-                IsPrivate = request.IsPrivate,
-                AllowedEmailsJson = request.AllowedEmails != null && request.AllowedEmails.Any()
-                    ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
-                    : null,
-                // إعدادات التوقيع
-                AllowDownloadAfterSigning = request.AllowDownloadAfterSigning,
-                SendCopyToSigner = request.SendCopyToSigner,
-                SignatureDisplayMode = request.SignatureDisplayMode ?? "inside",
-                SigningMode = request.SigningMode ?? "single",
-                ShareCode = GenerateShareCode()
-            };
-
-            await _unitOfWork.Events.AddAsync(evt);
-
-            // إضافة حقول التوقيع
-            var order = 0;
-            foreach (var fieldRequest in request.SignatureFields)
-            {
-                var field = new SignatureField
+                // إنشاء الحدث
+                var evt = new Event
                 {
                     Id = Guid.NewGuid(),
-                    EventId = evt.Id,
-                    Label = fieldRequest.Label,
-                    PageNumber = fieldRequest.PageNumber,
-                    PositionX = fieldRequest.PositionX,
-                    PositionY = fieldRequest.PositionY,
-                    Width = fieldRequest.Width,
-                    Height = fieldRequest.Height,
-                    IsRequired = fieldRequest.IsRequired,
-                    Order = fieldRequest.Order > 0 ? fieldRequest.Order : order++,
-                    FieldType = fieldRequest.FieldType,
-                    IncludeDate = fieldRequest.IncludeDate,
-                    IncludeName = fieldRequest.IncludeName,
-                    AssignedEmail = fieldRequest.AssignedEmail?.ToLowerInvariant()
+                    UserId = userId,
+                    Title = request.Title,
+                    Description = request.Description,
+                    Type = EventType.DocumentSigning,
+                    Status = EventStatus.Published, // Published مباشرة
+                    DocumentUrl = request.DocumentUrl,
+                    DocumentFileName = request.DocumentFileName,
+                    Language = "ar",
+                    // إعدادات الوصول
+                    RequireLogin = request.RequireLogin,
+                    AllowAnonymous = !request.RequireLogin, // عكس RequireLogin
+                    IsPrivate = request.IsPrivate,
+                    AllowedEmailsJson = request.AllowedEmails != null && request.AllowedEmails.Any()
+                        ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
+                        : null,
+                    // إعدادات التوقيع
+                    AllowDownloadAfterSigning = request.AllowDownloadAfterSigning,
+                    SendCopyToSigner = request.SendCopyToSigner,
+                    SignatureDisplayMode = request.SignatureDisplayMode ?? "inside",
+                    SigningMode = request.SigningMode ?? "single",
+                    ShareCode = GenerateShareCode()
                 };
-                await _unitOfWork.SignatureFields.AddAsync(field);
-            }
 
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitTransactionAsync();
+                await _unitOfWork.Events.AddAsync(evt);
+                eventId = evt.Id;
 
-            return await GetDocumentEventAsync(evt.Id, userId);
+                // إضافة حقول التوقيع
+                var order = 0;
+                foreach (var fieldRequest in request.SignatureFields)
+                {
+                    var field = new SignatureField
+                    {
+                        Id = Guid.NewGuid(),
+                        EventId = evt.Id,
+                        Label = fieldRequest.Label,
+                        PageNumber = fieldRequest.PageNumber,
+                        PositionX = fieldRequest.PositionX,
+                        PositionY = fieldRequest.PositionY,
+                        Width = fieldRequest.Width,
+                        Height = fieldRequest.Height,
+                        IsRequired = fieldRequest.IsRequired,
+                        Order = fieldRequest.Order > 0 ? fieldRequest.Order : order++,
+                        FieldType = fieldRequest.FieldType,
+                        IncludeDate = fieldRequest.IncludeDate,
+                        IncludeName = fieldRequest.IncludeName,
+                        AssignedEmail = fieldRequest.AssignedEmail?.ToLowerInvariant()
+                    };
+                    await _unitOfWork.SignatureFields.AddAsync(field);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            });
+
+            return await GetDocumentEventAsync(eventId, userId);
         }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackTransactionAsync();
             return ApiResponse<EventWithSignatureFieldsDto>.FailureResponse($"حدث خطأ: {ex.Message}");
         }
     }
@@ -190,69 +194,68 @@ public class DocumentSigningService : IDocumentSigningService
 
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
-
-            // تحديث الحدث
-            evt.Title = request.Title;
-            evt.Description = request.Description;
-            evt.CoverImage = request.CoverImage;
-            evt.ThemeColor = request.ThemeColor;
-            evt.Language = request.Language;
-            evt.StartDate = request.StartDate;
-            evt.EndDate = request.EndDate;
-            evt.RequireLogin = request.RequireLogin;
-            evt.AllowAnonymous = request.AllowAnonymous;
-            evt.MaxResponses = request.MaxResponses;
-            evt.AllowMultipleResponses = request.AllowMultipleResponses;
-            evt.IsPrivate = request.IsPrivate;
-            evt.AllowedEmailsJson = request.AllowedEmails != null
-                ? JsonSerializer.Serialize(request.AllowedEmails)
-                : null;
-            evt.AllowDownloadAfterSigning = request.AllowDownloadAfterSigning;
-            evt.SendCopyToSigner = request.SendCopyToSigner;
-            evt.ThankYouMessage = request.ThankYouMessage;
-            if (!string.IsNullOrEmpty(request.SignatureDisplayMode))
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                evt.SignatureDisplayMode = request.SignatureDisplayMode;
-            }
-
-            _unitOfWork.Events.Update(evt);
-
-            // حذف حقول التوقيع القديمة وإضافة الجديدة
-            await _unitOfWork.SignatureFields.DeleteByEventIdAsync(eventId);
-            await _unitOfWork.SaveChangesAsync();
-
-            var order = 0;
-            foreach (var fieldRequest in request.SignatureFields)
-            {
-                var field = new SignatureField
+                // تحديث الحدث
+                evt.Title = request.Title;
+                evt.Description = request.Description;
+                evt.CoverImage = request.CoverImage;
+                evt.ThemeColor = request.ThemeColor;
+                evt.Language = request.Language;
+                evt.StartDate = request.StartDate;
+                evt.EndDate = request.EndDate;
+                evt.RequireLogin = request.RequireLogin;
+                evt.AllowAnonymous = request.AllowAnonymous;
+                evt.MaxResponses = request.MaxResponses;
+                evt.AllowMultipleResponses = request.AllowMultipleResponses;
+                evt.IsPrivate = request.IsPrivate;
+                evt.AllowedEmailsJson = request.AllowedEmails != null
+                    ? JsonSerializer.Serialize(request.AllowedEmails)
+                    : null;
+                evt.AllowDownloadAfterSigning = request.AllowDownloadAfterSigning;
+                evt.SendCopyToSigner = request.SendCopyToSigner;
+                evt.ThankYouMessage = request.ThankYouMessage;
+                if (!string.IsNullOrEmpty(request.SignatureDisplayMode))
                 {
-                    Id = fieldRequest.Id != Guid.Empty ? fieldRequest.Id : Guid.NewGuid(),
-                    EventId = evt.Id,
-                    Label = fieldRequest.Label,
-                    PageNumber = fieldRequest.PageNumber,
-                    PositionX = fieldRequest.PositionX,
-                    PositionY = fieldRequest.PositionY,
-                    Width = fieldRequest.Width,
-                    Height = fieldRequest.Height,
-                    IsRequired = fieldRequest.IsRequired,
-                    Order = order++,
-                    FieldType = fieldRequest.FieldType,
-                    IncludeDate = fieldRequest.IncludeDate,
-                    IncludeName = fieldRequest.IncludeName,
-                    AssignedEmail = fieldRequest.AssignedEmail?.ToLowerInvariant()
-                };
-                await _unitOfWork.SignatureFields.AddAsync(field);
-            }
+                    evt.SignatureDisplayMode = request.SignatureDisplayMode;
+                }
 
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitTransactionAsync();
+                _unitOfWork.Events.Update(evt);
+
+                // حذف حقول التوقيع القديمة وإضافة الجديدة
+                await _unitOfWork.SignatureFields.DeleteByEventIdAsync(eventId);
+                await _unitOfWork.SaveChangesAsync();
+
+                var order = 0;
+                foreach (var fieldRequest in request.SignatureFields)
+                {
+                    var field = new SignatureField
+                    {
+                        Id = fieldRequest.Id != Guid.Empty ? fieldRequest.Id : Guid.NewGuid(),
+                        EventId = evt.Id,
+                        Label = fieldRequest.Label,
+                        PageNumber = fieldRequest.PageNumber,
+                        PositionX = fieldRequest.PositionX,
+                        PositionY = fieldRequest.PositionY,
+                        Width = fieldRequest.Width,
+                        Height = fieldRequest.Height,
+                        IsRequired = fieldRequest.IsRequired,
+                        Order = order++,
+                        FieldType = fieldRequest.FieldType,
+                        IncludeDate = fieldRequest.IncludeDate,
+                        IncludeName = fieldRequest.IncludeName,
+                        AssignedEmail = fieldRequest.AssignedEmail?.ToLowerInvariant()
+                    };
+                    await _unitOfWork.SignatureFields.AddAsync(field);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            });
 
             return await GetDocumentEventAsync(evt.Id, userId);
         }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackTransactionAsync();
             return ApiResponse<EventWithSignatureFieldsDto>.FailureResponse($"حدث خطأ: {ex.Message}");
         }
     }
@@ -436,72 +439,75 @@ public class DocumentSigningService : IDocumentSigningService
     {
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
-
-            // التحقق من وجود الحدث
-            var evt = await _unitOfWork.Events.GetByIdAsync(request.EventId);
-            if (evt == null)
-                return ApiResponse<List<DocumentSignatureDto>>.FailureResponse("الحدث غير موجود");
-
-            // إنشاء Response جديد إذا لم يكن موجوداً
-            var responseId = request.ResponseId;
-            if (responseId == Guid.Empty)
-            {
-                responseId = Guid.NewGuid();
-                var response = new Response
-                {
-                    Id = responseId,
-                    EventId = request.EventId,
-                    RespondentName = request.SignerName,
-                    RespondentEmail = request.SignerEmail,
-                    RespondentIp = ipAddress,
-                    UserAgent = userAgent,
-                    Status = ResponseStatus.Completed,
-                    StartedAt = DateTime.UtcNow,
-                    CompletedAt = DateTime.UtcNow
-                };
-                await _unitOfWork.Responses.AddAsync(response);
-            }
-
             var signatures = new List<DocumentSignature>();
 
-            foreach (var sig in request.Signatures)
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                var field = await _unitOfWork.SignatureFields.GetByIdAsync(sig.SignatureFieldId);
-                if (field == null)
-                    continue;
+                // التحقق من وجود الحدث
+                var evt = await _unitOfWork.Events.GetByIdAsync(request.EventId);
+                if (evt == null)
+                    throw new InvalidOperationException("الحدث غير موجود");
 
-                var exists = await _unitOfWork.DocumentSignatures.ExistsAsync(sig.SignatureFieldId, responseId);
-                if (exists)
-                    continue;
-
-                var signature = new DocumentSignature
+                // إنشاء Response جديد إذا لم يكن موجوداً
+                var responseId = request.ResponseId;
+                if (responseId == Guid.Empty)
                 {
-                    Id = Guid.NewGuid(),
-                    SignatureFieldId = sig.SignatureFieldId,
-                    ResponseId = responseId,
-                    SignerName = request.SignerName,
-                    SignerEmail = request.SignerEmail,
-                    SignerPhone = request.SignerPhone,
-                    SignatureData = sig.SignatureData,
-                    SignedAt = DateTime.UtcNow,
-                    IpAddress = ipAddress,
-                    UserAgent = userAgent
-                };
+                    responseId = Guid.NewGuid();
+                    var response = new Response
+                    {
+                        Id = responseId,
+                        EventId = request.EventId,
+                        RespondentName = request.SignerName,
+                        RespondentEmail = request.SignerEmail,
+                        RespondentIp = ipAddress,
+                        UserAgent = userAgent,
+                        Status = ResponseStatus.Completed,
+                        StartedAt = DateTime.UtcNow,
+                        CompletedAt = DateTime.UtcNow
+                    };
+                    await _unitOfWork.Responses.AddAsync(response);
+                }
 
-                await _unitOfWork.DocumentSignatures.AddAsync(signature);
-                signatures.Add(signature);
-            }
+                foreach (var sig in request.Signatures)
+                {
+                    var field = await _unitOfWork.SignatureFields.GetByIdAsync(sig.SignatureFieldId);
+                    if (field == null)
+                        continue;
 
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitTransactionAsync();
+                    var exists = await _unitOfWork.DocumentSignatures.ExistsAsync(sig.SignatureFieldId, responseId);
+                    if (exists)
+                        continue;
+
+                    var signature = new DocumentSignature
+                    {
+                        Id = Guid.NewGuid(),
+                        SignatureFieldId = sig.SignatureFieldId,
+                        ResponseId = responseId,
+                        SignerName = request.SignerName,
+                        SignerEmail = request.SignerEmail,
+                        SignerPhone = request.SignerPhone,
+                        SignatureData = sig.SignatureData,
+                        SignedAt = DateTime.UtcNow,
+                        IpAddress = ipAddress,
+                        UserAgent = userAgent
+                    };
+
+                    await _unitOfWork.DocumentSignatures.AddAsync(signature);
+                    signatures.Add(signature);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            });
 
             return ApiResponse<List<DocumentSignatureDto>>.SuccessResponse(
                 _mapper.Map<List<DocumentSignatureDto>>(signatures));
         }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResponse<List<DocumentSignatureDto>>.FailureResponse(ex.Message);
+        }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackTransactionAsync();
             return ApiResponse<List<DocumentSignatureDto>>.FailureResponse($"حدث خطأ: {ex.Message}");
         }
     }
