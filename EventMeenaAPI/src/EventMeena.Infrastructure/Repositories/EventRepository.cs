@@ -107,12 +107,16 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     {
         await _context.Database.ExecuteSqlRawAsync(
             "UPDATE Events SET ViewCount = ViewCount + 1 WHERE Id = {0}", eventId);
+        // مسح الـ Cache عشان EF Core ميتعارضش مع النسخة القديمة
+        _context.ChangeTracker.Clear();
     }
 
     public async Task IncrementResponseCountAsync(Guid eventId)
     {
         await _context.Database.ExecuteSqlRawAsync(
             "UPDATE Events SET ResponseCount = ResponseCount + 1 WHERE Id = {0}", eventId);
+        // مسح الـ Cache عشان EF Core ميتعارضش مع النسخة القديمة
+        _context.ChangeTracker.Clear();
     }
 
     public async Task<Dictionary<DateTime, int>> GetDailyEventCountsAsync(Guid userId, DateTime startDate, DateTime endDate)

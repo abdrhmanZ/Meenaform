@@ -191,7 +191,8 @@ public class AuthService : IAuthService
 
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = _jwtService.GetRefreshTokenExpiration();
-        _unitOfWork.Users.Update(user);
+        // لا نستدعي Update() لأن الـ Entity متتبعة من EF Core تلقائياً
+        // استدعاء Update() كان يغير حالة Entity جديدة من Added إلى Modified مما يسبب ConcurrencyException
         await _unitOfWork.SaveChangesAsync();
 
         return ApiResponse<AuthResponse>.SuccessResponse(new AuthResponse

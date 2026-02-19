@@ -107,7 +107,7 @@ public class SendEventService : ISendEventService
             return ApiResponse<int>.FailureResponse("الحدث غير موجود أو لا تملك صلاحية الوصول");
 
         var successCount = 0;
-        var eventLink = $"{_frontendUrl}/event/{eventEntity.ShareCode}";
+        var eventLink = $"{_frontendUrl}/e/{eventEntity.ShareCode}";
 
         foreach (var contactId in contactIds)
         {

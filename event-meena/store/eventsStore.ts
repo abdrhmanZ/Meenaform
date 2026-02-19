@@ -71,7 +71,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   // جلب حدث بواسطة ID - متصل بـ Backend API
   // يستخدم /full endpoint لجلب الأقسام والمكونات
   fetchEventById: async (id: string) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, currentEvent: null });
     try {
       // استخدام getFullDetails بدلاً من getById لجلب الأقسام والمكونات
       const event = await eventsService.getFullDetails(id);
@@ -92,7 +92,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   // جلب حدث بواسطة رمز المشاركة (للمشاركين) - Public endpoint
   fetchEventByShareCode: async (shareCode: string) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, currentEvent: null });
     try {
       const event = await eventsService.getByShareCode(shareCode);
       set({ currentEvent: event, isLoading: false });
@@ -112,7 +112,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   // جلب حدث للمعاينة (Public - بدون التحقق من الحالة)
   fetchEventForPreview: async (id: string) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, currentEvent: null });
     try {
       const event = await eventsService.getForPreview(id);
       set({ currentEvent: event, isLoading: false });

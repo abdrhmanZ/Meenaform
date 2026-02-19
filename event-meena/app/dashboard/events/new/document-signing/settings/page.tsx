@@ -49,6 +49,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useDocumentSigningBuilderStore } from "@/store/documentSigningBuilderStore";
 import { useContactsStore } from "@/store/contactsStore";
 import { documentSigningService } from "@/lib/api/services/documentSigningService";
+import { useEventsStore } from "@/store/eventsStore";
 import { toast } from "sonner";
 import { Contact, Group } from "@/types/contact";
 
@@ -263,6 +264,9 @@ export default function DocumentSigningSettingsPage() {
       });
 
       toast.success("تم إنشاء حدث التوقيع بنجاح!");
+
+      // مسح cache الأحداث عشان الحدث الجديد يظهر في صفحة الأحداث
+      useEventsStore.getState().events.length > 0 && useEventsStore.setState({ events: [] });
 
       // تعيين النجاح أولاً لمنع redirect غير مرغوب
       setIsSuccess(true);
