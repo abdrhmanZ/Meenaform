@@ -58,6 +58,9 @@ interface ContactsStoreState {
 // متغيرات خارجية لمنع الاستدعاءات المتكررة (deduplication)
 let pendingFetchContacts: Promise<void> | null = null;
 let pendingFetchGroups: Promise<void> | null = null;
+// ✅ flags لتتبع هل جلبنا البيانات قبل كده
+let hasFetchedContacts = false;
+let hasFetchedGroups = false;
 
 export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // Initial state
@@ -73,9 +76,8 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // جلب جميع جهات الاتصال - متصل بـ Backend API
   // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchContacts: async () => {
-    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
-    if (pendingFetchContacts) {
-      await pendingFetchContacts;
+    // ✅ لو جلبنا قبل كده، نرجع فوراً
+    if (hasFetchedContacts) {
       return;
     }
 
@@ -84,6 +86,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
     pendingFetchContacts = (async () => {
       try {
         const contacts = await contactsService.getAll();
+        hasFetchedContacts = true;
         set({
           contacts,
           isLoading: false,
@@ -224,9 +227,8 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // جلب جميع المجموعات - متصل بـ Backend API
   // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchGroups: async () => {
-    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
-    if (pendingFetchGroups) {
-      await pendingFetchGroups;
+    // ✅ لو جلبنا قبل كده، نرجع فوراً
+    if (hasFetchedGroups) {
       return;
     }
 
@@ -235,6 +237,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
     pendingFetchGroups = (async () => {
       try {
         const groups = await groupsService.getAll();
+        hasFetchedGroups = true;
         set({
           groups,
           isLoading: false,

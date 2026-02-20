@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -14,11 +14,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const hasChecked = useRef(false);
-
-  // ✅ تحقق مباشر من localStorage - يشتغل حتى في أول render بعد SSR
-  const hasToken = tokenManager.hasValidToken();
+  // ✅ نبدأ بـ false عشان السيرفر والـ client يكونوا متطابقين (no hydration mismatch)
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
+    // تحقق من التوكن فوراً على الـ client
+    setHasToken(tokenManager.hasValidToken());
+
     // التحقق من الجلسة في الخلفية (مرة واحدة فقط)
     if (!hasChecked.current) {
       hasChecked.current = true;
@@ -34,24 +36,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [isAuthenticated, isLoading, hasToken, router]);
 
   // ✅ Optimistic: لو التوكن موجود أو المستخدم مسجل، اعرض المحتوى فوراً
-  // checkAuth يشتغل في الخلفية - لو التوكن انتهى يعمل redirect
   if (isAuthenticated || hasToken) {
     return <>{children}</>;
   }
 
-  // ⏳ ما فيه توكن أصلاً - ننتظر checkAuth يخلص
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحقق من الجلسة...</p>
-        </div>
+  // ⏳ ننتظر checkAuth يخلص
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">جاري التحقق من الجلسة...</p>
       </div>
-    );
-  }
-
-  // في حالة عدم المصادقة وعدم التحميل (سيتم التوجيه للـ login)
-  return null;
+    </div>
+  );
 }
 

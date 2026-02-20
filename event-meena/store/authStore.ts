@@ -12,16 +12,13 @@ import { ApiError } from "@/lib/api/client";
 // متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
 let pendingAuthCheck: Promise<void> | null = null;
 
-// ✅ Optimistic Auth: لو التوكن موجود، نعتبر المستخدم مسجل مؤقتاً
-const hasToken = typeof window !== "undefined" && !!localStorage.getItem("event_meena_access_token");
-
 // إنشاء Store
 export const useAuthStore = create<AuthState>((set, get) => ({
-  // الحالة الأولية - Optimistic: لو التوكن موجود نعرض الصفحة فوراً
+  // ✅ الحالة الأولية — دائماً نفسها على السيرفر والـ client (لمنع Hydration Error)
   user: null,
-  token: hasToken ? localStorage.getItem("event_meena_access_token") : null,
-  isAuthenticated: hasToken, // ✅ نثق بالتوكن مؤقتاً - لو انتهى checkAuth يصححه
-  isLoading: !hasToken, // ✅ loading فقط لو ما فيه توكن أصلاً
+  token: null,
+  isAuthenticated: false,
+  isLoading: true,
   error: null,
 
   // تسجيل الدخول - متصل بـ Backend API

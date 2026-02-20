@@ -192,7 +192,7 @@ export interface EventsState {
   };
 
   // الوظائف
-  fetchEvents: () => Promise<void>;
+  fetchEvents: (force?: boolean) => Promise<void>;
   fetchEventById: (id: string) => Promise<void>;
   fetchEventByShareCode: (shareCode: string) => Promise<void>;
   fetchEventForPreview: (id: string) => Promise<void>;

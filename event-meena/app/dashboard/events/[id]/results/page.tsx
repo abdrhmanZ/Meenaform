@@ -41,7 +41,7 @@ function ResultsPageContent() {
   const router = useRouter();
   const eventId = params.id as string;
 
-  const { currentEvent, fetchEventById, events } = useEventsStore();
+  const { currentEvent, fetchEventById, fetchEvents, events } = useEventsStore();
   const [responses, setResponses] = useState<Response[]>([]);
   const [filteredResponses, setFilteredResponses] = useState<Response[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,6 +53,7 @@ function ResultsPageContent() {
   // Document Signing specific state
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
 
+
   const hasFetched = useRef(false);
 
   // ✅ لو الحدث موجود في الـ events list، نعرضه فوراً
@@ -62,17 +63,31 @@ function ResultsPageContent() {
   );
   const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
 
-  // ✅ تحميل الحدث والردود بالتوازي - بدون الاعتماد على global isLoading
+  // ✅ تحميل الحدث والردود بالتوازي — يفضل يحاول لحد ما يجيبها
+  const loadEventData = async (retryCount = 0) => {
+    setIsLoadingEvent(true);
+    try {
+      await fetchEventById(eventId);
+    } catch {
+      // Fallback: جلب قائمة الأحداث (أخف)
+      try {
+        await fetchEvents(true);
+      } catch {
+        // يحاول تاني بتأخير متزايد
+        const delay = Math.min(2000 * (retryCount + 1), 10000);
+        await new Promise(r => setTimeout(r, delay));
+        return loadEventData(retryCount + 1);
+      }
+    } finally {
+      setIsLoadingEvent(false);
+    }
+    loadResponses();
+  };
+
   useEffect(() => {
     if (eventId && !hasFetched.current) {
       hasFetched.current = true;
-
-      // جلب الحدث (local loading state)
-      setIsLoadingEvent(true);
-      fetchEventById(eventId).finally(() => setIsLoadingEvent(false));
-
-      // جلب الردود بالتوازي (لا ننتظر الحدث)
-      loadResponses();
+      loadEventData();
     }
   }, [eventId, fetchEventById]);
 
@@ -91,30 +106,22 @@ function ResultsPageContent() {
     fetchDocumentSigningData();
   }, [currentEvent, eventId]);
 
-  const loadResponses = async () => {
+  const loadResponses = async (retryCount = 0) => {
     setIsLoadingResponses(true);
     try {
-      // Load responses from API
       const apiResponses = await responsesService.getByEventId(eventId);
-      // Filter to show only completed responses
       const completedResponses = apiResponses.filter(
         (r: Response) => r.status === "completed"
       );
       setResponses(completedResponses);
       setFilteredResponses(completedResponses);
-
-    } catch (error) {
-      console.error("❌ Failed to load responses from API:", error);
-      // Fallback: try localStorage for backward compatibility
-      const allResponses = JSON.parse(localStorage.getItem("event_responses") || "[]");
-      const eventResponses = allResponses.filter(
-        (r: Response) => r.eventId === eventId && r.status === "completed"
-      );
-      setResponses(eventResponses);
-      setFilteredResponses(eventResponses);
-
-    } finally {
       setIsLoadingResponses(false);
+    } catch (error) {
+      console.error(`❌ Failed to load responses (attempt ${retryCount + 1}):`, error);
+      // ✅ يفضل يحاول لحد ما يجيبها (بتأخير متزايد، حد أقصى 10 ثوان)
+      const delay = Math.min(2000 * (retryCount + 1), 10000);
+      await new Promise(r => setTimeout(r, delay));
+      return loadResponses(retryCount + 1);
     }
   };
 
@@ -137,7 +144,7 @@ function ResultsPageContent() {
   const stats = {
     totalResponses: responses.length,
     completedResponses: responses.filter((r) => r.status === "completed").length,
-    completionRate: responses.length > 0 
+    completionRate: responses.length > 0
       ? Math.round((responses.filter((r) => r.status === "completed").length / responses.length) * 100)
       : 0,
     averageTime: responses.length > 0
@@ -234,160 +241,163 @@ function ResultsPageContent() {
         ) : (
           <>
             {/* Regular Results Content */}
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-blue-50">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="mb-1">
-              <p className="text-3xl font-bold text-gray-900">{stats.totalResponses}</p>
-            </div>
-            <p className="text-sm text-gray-600">إجمالي الردود</p>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-green-50">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <div className="mb-1">
-              <p className="text-3xl font-bold text-gray-900">{stats.completedResponses}</p>
-            </div>
-            <p className="text-sm text-gray-600">ردود مكتملة</p>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-purple-50">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mb-1">
-              <p className="text-3xl font-bold text-gray-900">{stats.completionRate}%</p>
-            </div>
-            <p className="text-sm text-gray-600">نسبة الإكمال</p>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-orange-50">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-            <div className="mb-1">
-              <p className="text-3xl font-bold text-gray-900">{formatTime(stats.averageTime)}</p>
-            </div>
-            <p className="text-sm text-gray-600">متوسط الوقت</p>
-          </Card>
-        </div>
-
-        {/* Search and Filter */}
-        <Card className="p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="ابحث عن مشارك (الاسم أو البريد الإلكتروني)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 ml-2" />
-              فلترة
-            </Button>
-          </div>
-        </Card>
-
-        {/* Participants List */}
-        {filteredResponses.length === 0 ? (
-          <Card className="p-12 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              لا توجد نتائج بعد
-            </h3>
-            <p className="text-gray-600">
-              {searchQuery ? "لم يتم العثور على نتائج مطابقة للبحث" : "لم يقم أي مشارك بإكمال هذا الحدث بعد"}
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredResponses.map((response) => (
-              <Card
-                key={response.id}
-                className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-primary/50"
-                onClick={() => router.push(`/dashboard/events/${eventId}/results/${response.id}`)}
-              >
-                {/* Participant Avatar */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-lg">
-                    {response.participant.name?.charAt(0).toUpperCase() || "؟"}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">
-                      {response.participant.name || "مشارك مجهول"}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {response.participant.email || "لا يوجد بريد"}
-                    </p>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-blue-50">
+                    <Users className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
-
-                {/* Stats */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">التاريخ:</span>
-                    <span className="font-medium text-gray-900">
-                      {new Date(response.completedAt || response.startedAt).toLocaleDateString("ar-EG")}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">الوقت المستغرق:</span>
-                    <span className="font-medium text-gray-900">
-                      {formatTime(response.timeSpent)}
-                    </span>
-                  </div>
-                  {response.score && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">الدرجة:</span>
-                      <span className="font-bold text-primary">
-                        {response.score.earnedPoints}/{response.score.totalPoints} ({response.score.percentage}%)
-                      </span>
-                    </div>
-                  )}
+                <div className="mb-1">
+                  <p className="text-3xl font-bold text-gray-900">{stats.totalResponses}</p>
                 </div>
-
-                {/* Status Badge */}
-                <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    response.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
-                    {response.status === "completed" ? "✅ مكتمل" : "⏳ قيد الإكمال"}
-                  </span>
-                  {response.score && (
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      response.score.passed
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}>
-                      {response.score.passed ? "✅ نجح" : "❌ رسب"}
-                    </span>
-                  )}
-                </div>
+                <p className="text-sm text-gray-600">إجمالي الردود</p>
               </Card>
-            ))}
-          </div>
-        )}
+
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-green-50">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+                <div className="mb-1">
+                  <p className="text-3xl font-bold text-gray-900">{stats.completedResponses}</p>
+                </div>
+                <p className="text-sm text-gray-600">ردود مكتملة</p>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-purple-50">
+                    <TrendingUp className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+                <div className="mb-1">
+                  <p className="text-3xl font-bold text-gray-900">{stats.completionRate}%</p>
+                </div>
+                <p className="text-sm text-gray-600">نسبة الإكمال</p>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-orange-50">
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div className="mb-1">
+                  <p className="text-3xl font-bold text-gray-900">{formatTime(stats.averageTime)}</p>
+                </div>
+                <p className="text-sm text-gray-600">متوسط الوقت</p>
+              </Card>
+            </div>
+
+            {/* Search and Filter */}
+            <Card className="p-6 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="ابحث عن مشارك (الاسم أو البريد الإلكتروني)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-10"
+                  />
+                </div>
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 ml-2" />
+                  فلترة
+                </Button>
+              </div>
+            </Card>
+
+            {/* Participants List */}
+            {isLoadingResponses ? (
+              <Card className="p-12 text-center">
+                <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">جاري تحميل النتائج...</p>
+              </Card>
+            ) : filteredResponses.length === 0 ? (
+              <Card className="p-12 text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  لا توجد نتائج بعد
+                </h3>
+                <p className="text-gray-600">
+                  {searchQuery ? "لم يتم العثور على نتائج مطابقة للبحث" : "لم يقم أي مشارك بإكمال هذا الحدث بعد"}
+                </p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredResponses.map((response) => (
+                  <Card
+                    key={response.id}
+                    className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-primary/50"
+                    onClick={() => router.push(`/dashboard/events/${eventId}/results/${response.id}`)}
+                  >
+                    {/* Participant Avatar */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                        {response.participant.name?.charAt(0).toUpperCase() || "؟"}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">
+                          {response.participant.name || "مشارك مجهول"}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {response.participant.email || "لا يوجد بريد"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">التاريخ:</span>
+                        <span className="font-medium text-gray-900">
+                          {new Date(response.completedAt || response.startedAt).toLocaleDateString("ar-EG")}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">الوقت المستغرق:</span>
+                        <span className="font-medium text-gray-900">
+                          {formatTime(response.timeSpent)}
+                        </span>
+                      </div>
+                      {response.score && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">الدرجة:</span>
+                          <span className="font-bold text-primary">
+                            {response.score.earnedPoints}/{response.score.totalPoints} ({response.score.percentage}%)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex items-center justify-between">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${response.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                        }`}>
+                        {response.status === "completed" ? "✅ مكتمل" : "⏳ قيد الإكمال"}
+                      </span>
+                      {response.score && (
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${response.score.passed
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                          }`}>
+                          {response.score.passed ? "✅ نجح" : "❌ رسب"}
+                        </span>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

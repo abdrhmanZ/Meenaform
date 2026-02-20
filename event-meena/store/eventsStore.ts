@@ -10,6 +10,8 @@ import { ApiError } from "@/lib/api/client";
 
 // متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
 let pendingFetchEvents: Promise<void> | null = null;
+// ✅ flag لتتبع هل جلبنا الأحداث قبل كده ولا لأ (يشتغل حتى لو 0 أحداث)
+let hasFetchedEvents = false;
 
 export const useEventsStore = create<EventsState>((set, get) => ({
   events: [],
@@ -26,9 +28,13 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   },
 
   // جلب جميع الأحداث - متصل بـ Backend API
-  // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
-  fetchEvents: async () => {
-    // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
+  // ✅ نفس نمط مشاركاتي: لو جلبنا قبل كده نرجع فوراً بدون API call
+  fetchEvents: async (force?: boolean) => {
+    if (hasFetchedEvents && !force) {
+      return;
+    }
+
+    // لو فيه طلب شغال، ننتظره
     if (pendingFetchEvents) {
       await pendingFetchEvents;
       return;
@@ -39,6 +45,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
     pendingFetchEvents = (async () => {
       try {
         const events = await eventsService.getAll();
+        hasFetchedEvents = true;
         set({ events, isLoading: false });
       } catch (error) {
         const errorMessage =

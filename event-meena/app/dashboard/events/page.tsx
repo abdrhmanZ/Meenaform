@@ -91,7 +91,8 @@ function EventsPageContent() {
     }
   };
 
-  if (isLoading) {
+  // ✅ نعرض loading بس لو مافيش بيانات مخزنة — لو فيه cache نعرض الأحداث فوراً
+  if (isLoading && events.length === 0) {
     return (
       <DashboardLayout>
         <EventsPageHeader />
