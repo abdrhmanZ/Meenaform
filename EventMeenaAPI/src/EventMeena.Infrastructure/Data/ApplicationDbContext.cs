@@ -13,6 +13,9 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
+        // جعل كل الـ queries بدون تتبع افتراضياً = أداء أفضل + ذاكرة أقل
+        // العمليات اللي محتاجة تتبع (Add/Update/Delete) بتتعامل مع الـ ChangeTracker مباشرة
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
     }
 
     // DbSets

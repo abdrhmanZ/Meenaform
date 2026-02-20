@@ -19,7 +19,7 @@ export default function EventPublicLink({ shareCode }: EventPublicLinkProps) {
   const eventUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/e/${shareCode}`
-      : `https://event-meena.com/e/${shareCode}`;
+      : `https://events.meena.sa/e/${shareCode}`;
 
   const handleCopy = async () => {
     try {
@@ -64,11 +64,10 @@ export default function EventPublicLink({ shareCode }: EventPublicLinkProps) {
           <Button
             onClick={handleCopy}
             variant="outline"
-            className={`px-4 ${
-              copied
+            className={`px-4 ${copied
                 ? "bg-green-50 border-green-500 text-green-600"
                 : "hover:bg-primary/5 hover:border-primary"
-            }`}
+              }`}
           >
             {copied ? (
               <>

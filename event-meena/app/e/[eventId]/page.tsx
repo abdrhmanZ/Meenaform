@@ -64,20 +64,15 @@ export default function EventParticipatePage() {
     }
   }, [currentEvent]);
 
-  // جلب بيانات التوقيع إذا كان الحدث من نوع document_signing
+  // جلب بيانات التوقيع بالتوازي مع تحميل الحدث
   useEffect(() => {
-    const fetchDocumentSigningData = async () => {
-      if (currentEvent?.type === "document_signing" && shareCode) {
-        try {
-          const docEvent = await documentSigningService.getDocumentEventByShareCode(shareCode);
-          setDocumentSigningEvent(docEvent);
-        } catch (err) {
-          console.error("Error fetching document signing event:", err);
-        }
-      }
-    };
-    fetchDocumentSigningData();
-  }, [currentEvent, shareCode]);
+    if (shareCode) {
+      // ✅ جلب بيانات التوقيع بالتوازي — لا ننتظر currentEvent
+      documentSigningService.getDocumentEventByShareCode(shareCode)
+        .then(setDocumentSigningEvent)
+        .catch(() => { }); // تجاهل الخطأ إذا مش حدث توقيع
+    }
+  }, [shareCode]);
 
   useEffect(() => {
     if (currentEvent) {
@@ -183,13 +178,36 @@ export default function EventParticipatePage() {
     setShowParticipantForm(false);
   };
 
-  // Loading state - show loading if: actively loading OR hasn't loaded yet (no event and no error)
+  // ✅ Skeleton UI — هيكل الصفحة يظهر فوراً أثناء التحميل
   if (isLoading || (!currentEvent && !error)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">جاري تحميل الحدث...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="bg-white border-b border-gray-100 py-4 px-6">
+          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* عنوان الحدث */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 space-y-4">
+              <div className="h-8 w-3/4 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+              <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+              <div className="flex gap-4 mt-4">
+                <div className="h-10 w-28 bg-gray-100 rounded-lg animate-pulse" />
+                <div className="h-10 w-28 bg-gray-100 rounded-lg animate-pulse" />
+              </div>
+            </div>
+            {/* محتوى الحدث */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
+              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="space-y-4">
+                <div className="h-12 w-full bg-gray-50 rounded-lg animate-pulse" />
+                <div className="h-12 w-full bg-gray-50 rounded-lg animate-pulse" />
+                <div className="h-12 w-full bg-gray-50 rounded-lg animate-pulse" />
+              </div>
+              <div className="h-12 w-40 bg-blue-100 rounded-lg animate-pulse mx-auto" />
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -518,12 +518,12 @@ public class EventService : IEventService
         return code;
     }
 
+    private static readonly Random _random = new();
     private static string GenerateRandomCode(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var random = new Random();
         return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
+            .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 
     public async Task<ApiResponse<DashboardStatsDto>> GetDashboardStatsAsync(Guid userId)
@@ -543,7 +543,7 @@ public class EventService : IEventService
         // جلب إجمالي المشاهدات والردود
         var (totalViews, totalResponses) = await _unitOfWork.Events.GetTotalStatsAsync(userId);
 
-        // حساب معدل الإكمال (متوسط نسبة الردود المكتملة) - استعلام واحد بدل N استعلام
+        // حساب معدل الإكمال
         double avgCompletionRate = 0;
         var eventsWithResponses = events.Where(e => e.ResponseCount > 0).ToList();
         if (eventsWithResponses.Any())
@@ -556,7 +556,7 @@ public class EventService : IEventService
             }
         }
 
-        // حساب نسب التغيير - استعلام واحد بدل 2 لكل نوع
+        // حساب نسب التغيير
         var (currentPeriodEvents, previousPeriodEvents) = await _unitOfWork.Events
             .GetEventsCountForPeriodsAsync(userId, startOfCurrentPeriod, now, startOfPreviousPeriod, endOfPreviousPeriod);
         var eventsChange = CalculatePercentageChange(previousPeriodEvents, currentPeriodEvents);

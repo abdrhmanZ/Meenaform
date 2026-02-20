@@ -13,7 +13,7 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
-    private readonly string _apiKey;
+    private readonly SendGridClient? _client;
     private readonly string _fromEmail;
     private readonly string _fromName;
 
@@ -21,7 +21,8 @@ public class EmailService : IEmailService
     {
         _configuration = configuration;
         _logger = logger;
-        _apiKey = _configuration["EmailSettings:SendGridApiKey"] ?? string.Empty;
+        var apiKey = _configuration["EmailSettings:SendGridApiKey"] ?? string.Empty;
+        _client = !string.IsNullOrEmpty(apiKey) ? new SendGridClient(apiKey) : null;
         _fromEmail = _configuration["EmailSettings:FromEmail"] ?? "noreply@eventmeena.com";
         _fromName = _configuration["EmailSettings:FromName"] ?? "Event Meena";
     }
@@ -29,7 +30,7 @@ public class EmailService : IEmailService
     /// <inheritdoc />
     public async Task<bool> SendEmailAsync(string toEmail, string toName, string subject, string htmlContent, string? plainTextContent = null)
     {
-        if (string.IsNullOrEmpty(_apiKey))
+        if (_client == null)
         {
             _logger.LogWarning("SendGrid API Key is not configured. Email not sent to {Email}", toEmail);
             return false;
@@ -37,12 +38,11 @@ public class EmailService : IEmailService
 
         try
         {
-            var client = new SendGridClient(_apiKey);
             var from = new EmailAddress(_fromEmail, _fromName);
             var to = new EmailAddress(toEmail, toName);
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent ?? string.Empty, htmlContent);
 
-            var response = await client.SendEmailAsync(msg);
+            var response = await _client.SendEmailAsync(msg);
 
             if (response.IsSuccessStatusCode)
             {

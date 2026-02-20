@@ -161,11 +161,10 @@ public class ResponseService : IResponseService
         response.DurationSeconds = (int)(DateTime.UtcNow - response.StartedAt).TotalSeconds;
 
         _unitOfWork.Responses.Update(response);
-
-        // زيادة عداد الردود في الحدث
-        await _unitOfWork.Events.IncrementResponseCountAsync(response.EventId);
-
         await _unitOfWork.SaveChangesAsync();
+
+        // زيادة عداد الردود في الحدث (بعد حفظ الرد بنجاح)
+        await _unitOfWork.Events.IncrementResponseCountAsync(response.EventId);
 
         return ApiResponse<ResponseDto>.SuccessResponse(_mapper.Map<ResponseDto>(response), "تم إكمال الاستجابة بنجاح");
     }

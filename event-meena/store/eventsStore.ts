@@ -28,15 +28,6 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   // جلب جميع الأحداث - متصل بـ Backend API
   // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchEvents: async () => {
-    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
-    const state = get();
-    if (state.events.length > 0 && !state.error) {
-      if (state.isLoading) {
-        set({ isLoading: false });
-      }
-      return;
-    }
-
     // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
     if (pendingFetchEvents) {
       await pendingFetchEvents;
@@ -92,7 +83,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   // جلب حدث بواسطة رمز المشاركة (للمشاركين) - Public endpoint
   fetchEventByShareCode: async (shareCode: string) => {
-    set({ isLoading: true, error: null, currentEvent: null });
+    set({ isLoading: true, error: null });
     try {
       const event = await eventsService.getByShareCode(shareCode);
       set({ currentEvent: event, isLoading: false });
@@ -112,7 +103,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   // جلب حدث للمعاينة (Public - بدون التحقق من الحالة)
   fetchEventForPreview: async (id: string) => {
-    set({ isLoading: true, error: null, currentEvent: null });
+    set({ isLoading: true, error: null });
     try {
       const event = await eventsService.getForPreview(id);
       set({ currentEvent: event, isLoading: false });
@@ -359,42 +350,42 @@ export const useEventsStore = create<EventsState>((set, get) => ({
       throw error;
     }
   },
-  
+
   // تعيين البحث
   setSearch: (search: string) => {
     set((state) => ({
       filters: { ...state.filters, search },
     }));
   },
-  
+
   // تعيين فلتر الحالة
   setStatusFilter: (status: EventStatus | "all") => {
     set((state) => ({
       filters: { ...state.filters, status },
     }));
   },
-  
+
   // تعيين فلتر النوع
   setTypeFilter: (type: EventType | "all") => {
     set((state) => ({
       filters: { ...state.filters, type },
     }));
   },
-  
+
   // تعيين الترتيب
   setSortBy: (sortBy: "createdAt" | "updatedAt" | "title" | "responses") => {
     set((state) => ({
       filters: { ...state.filters, sortBy },
     }));
   },
-  
+
   // تعيين اتجاه الترتيب
   setSortOrder: (sortOrder: "asc" | "desc") => {
     set((state) => ({
       filters: { ...state.filters, sortOrder },
     }));
   },
-  
+
   // مسح الفلاتر
   clearFilters: () => {
     set({
@@ -407,7 +398,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
       },
     });
   },
-  
+
   // الحصول على الأحداث المفلترة
   getFilteredEvents: () => {
     const { events, filters } = get();
@@ -433,17 +424,17 @@ export const useEventsStore = create<EventsState>((set, get) => ({
     if (filters.status !== "all" && filters.status !== "archived") {
       filtered = filtered.filter((e) => e.status === filters.status);
     }
-    
+
     // فلترة حسب النوع
     if (filters.type !== "all") {
       filtered = filtered.filter((e) => e.type === filters.type);
     }
-    
+
     // الترتيب
     filtered.sort((a, b) => {
       let aValue: any;
       let bValue: any;
-      
+
       switch (filters.sortBy) {
         case "title":
           aValue = a.title.toLowerCase();
@@ -463,14 +454,14 @@ export const useEventsStore = create<EventsState>((set, get) => ({
           bValue = new Date(b.createdAt).getTime();
           break;
       }
-      
+
       if (filters.sortOrder === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-    
+
     return filtered;
   },
 }));

@@ -18,6 +18,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
     public async Task<IReadOnlyList<Response>> GetByEventIdAsync(Guid eventId)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(r => r.EventId == eventId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -26,6 +27,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
     public async Task<IReadOnlyList<Response>> GetByEventIdAndStatusAsync(Guid eventId, ResponseStatus status)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(r => r.EventId == eventId && r.Status == status)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -82,6 +84,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
     public async Task<IReadOnlyList<Response>> GetRecentByEventIdAsync(Guid eventId, int count)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(r => r.EventId == eventId)
             .OrderByDescending(r => r.CreatedAt)
             .Take(count)
@@ -133,8 +136,8 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
     public async Task<Dictionary<DateTime, int>> GetDailyResponseCountsAsync(Guid userId, DateTime startDate, DateTime endDate)
     {
+        // ✅ لا نحتاج Include — EF Core يقدر يعمل JOIN تلقائياً في الـ Where
         var responses = await _dbSet
-            .Include(r => r.Event)
             .Where(r => r.Event.UserId == userId &&
                        r.Status == ResponseStatus.Completed &&
                        r.CompletedAt.HasValue &&
@@ -150,8 +153,8 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
     public async Task<int> GetCompletedResponsesCountAsync(Guid userId, DateTime? startDate = null, DateTime? endDate = null)
     {
+        // ✅ لا نحتاج Include — EF Core يقدر يعمل JOIN تلقائياً في الـ Where
         var query = _dbSet
-            .Include(r => r.Event)
             .Where(r => r.Event.UserId == userId && r.Status == ResponseStatus.Completed);
 
         if (startDate.HasValue)
@@ -167,6 +170,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
     {
         // List view: only need Event basic info + User name, no Sections/Components
         return await _dbSet
+            .AsNoTracking()
             .Include(r => r.Event)
                 .ThenInclude(e => e.User)
             .Where(r => r.RespondentEmail != null &&
@@ -180,6 +184,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
     {
         // Details view: need full Event with Sections + Components
         return await _dbSet
+            .AsNoTracking()
             .Include(r => r.Event)
                 .ThenInclude(e => e.User)
             .Include(r => r.Event)
@@ -193,6 +198,7 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
         var totalCount = await _dbSet.CountAsync(r => r.EventId == eventId);
 
         var items = await _dbSet
+            .AsNoTracking()
             .Where(r => r.EventId == eventId)
             .OrderByDescending(r => r.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)

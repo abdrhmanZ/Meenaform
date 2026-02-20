@@ -468,14 +468,22 @@ public class DocumentSigningService : IDocumentSigningService
                     await _unitOfWork.Responses.AddAsync(response);
                 }
 
+                // ✅ جلب كل الـ fields المطلوبة مرة واحدة بدل query لكل واحد
+                var requestedFieldIds = request.Signatures.Select(s => s.SignatureFieldId).ToList();
+                var allFields = await _unitOfWork.SignatureFields.GetByEventIdAsync(request.EventId);
+                var validFieldIds = allFields.Select(f => f.Id).ToHashSet();
+
+                // ✅ جلب كل التواقيع الموجودة مرة واحدة
+                var existingSignatures = await _unitOfWork.DocumentSignatures.GetByResponseIdAsync(responseId);
+                var existingFieldIds = existingSignatures.Select(s => s.SignatureFieldId).ToHashSet();
+
                 foreach (var sig in request.Signatures)
                 {
-                    var field = await _unitOfWork.SignatureFields.GetByIdAsync(sig.SignatureFieldId);
-                    if (field == null)
+                    // تحقق بدون query — من البيانات المحملة مسبقاً
+                    if (!validFieldIds.Contains(sig.SignatureFieldId))
                         continue;
 
-                    var exists = await _unitOfWork.DocumentSignatures.ExistsAsync(sig.SignatureFieldId, responseId);
-                    if (exists)
+                    if (existingFieldIds.Contains(sig.SignatureFieldId))
                         continue;
 
                     var signature = new DocumentSignature
@@ -556,12 +564,12 @@ public class DocumentSigningService : IDocumentSigningService
 
     #region Private Methods
 
+    private static readonly Random _random = new();
     private static string GenerateShareCode()
     {
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-        var random = new Random();
         return new string(Enumerable.Repeat(chars, 8)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
+            .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 
     #endregion

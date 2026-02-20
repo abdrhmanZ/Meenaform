@@ -18,6 +18,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<Event?> GetByIdWithSectionsAsync(Guid id)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections.OrderBy(s => s.Order))
             .FirstOrDefaultAsync(e => e.Id == id);
     }
@@ -25,6 +26,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<Event?> GetByIdWithFullDetailsAsync(Guid id)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections.OrderBy(s => s.Order))
                 .ThenInclude(s => s.Components.OrderBy(c => c.Order))
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -33,6 +35,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<Event?> GetByShareCodeAsync(string shareCode)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections.OrderBy(s => s.Order))
                 .ThenInclude(s => s.Components.OrderBy(c => c.Order))
             .FirstOrDefaultAsync(e => e.ShareCode == shareCode);
@@ -41,6 +44,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdAsync(Guid userId)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(e => e.UserId == userId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -49,6 +53,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdWithCountsAsync(Guid userId)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
             .Include(e => e.SignatureFields)
@@ -61,6 +66,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdAndStatusAsync(Guid userId, EventStatus status)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(e => e.UserId == userId && e.Status == status)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -69,6 +75,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdAndStatusWithCountsAsync(Guid userId, EventStatus status)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
             .Include(e => e.SignatureFields)
@@ -81,6 +88,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdAndTypeAsync(Guid userId, EventType type)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(e => e.UserId == userId && e.Type == type)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -89,6 +97,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task<IReadOnlyList<Event>> GetByUserIdAndTypeWithCountsAsync(Guid userId, EventType type)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
             .Include(e => e.SignatureFields)
@@ -107,16 +116,22 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     {
         await _context.Database.ExecuteSqlRawAsync(
             "UPDATE Events SET ViewCount = ViewCount + 1 WHERE Id = {0}", eventId);
-        // مسح الـ Cache عشان EF Core ميتعارضش مع النسخة القديمة
-        _context.ChangeTracker.Clear();
+        // فصل الـ Event المحدد فقط (لو كان متتبع) بدل مسح كل الـ entities
+        var trackedEvent = _context.ChangeTracker.Entries<Event>()
+            .FirstOrDefault(e => e.Entity.Id == eventId);
+        if (trackedEvent != null)
+            trackedEvent.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
     }
 
     public async Task IncrementResponseCountAsync(Guid eventId)
     {
         await _context.Database.ExecuteSqlRawAsync(
             "UPDATE Events SET ResponseCount = ResponseCount + 1 WHERE Id = {0}", eventId);
-        // مسح الـ Cache عشان EF Core ميتعارضش مع النسخة القديمة
-        _context.ChangeTracker.Clear();
+        // فصل الـ Event المحدد فقط (لو كان متتبع) بدل مسح كل الـ entities
+        var trackedEvent = _context.ChangeTracker.Entries<Event>()
+            .FirstOrDefault(e => e.Entity.Id == eventId);
+        if (trackedEvent != null)
+            trackedEvent.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
     }
 
     public async Task<Dictionary<DateTime, int>> GetDailyEventCountsAsync(Guid userId, DateTime startDate, DateTime endDate)
@@ -181,6 +196,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
 
         // لا نجلب Responses لأنها ثقيلة (AnswersJson كبير) - نجلب العدد بشكل منفصل
         var items = await _dbSet
+            .AsNoTracking()
             .Include(e => e.Sections)
                 .ThenInclude(s => s.Components)
             .Include(e => e.SignatureFields)

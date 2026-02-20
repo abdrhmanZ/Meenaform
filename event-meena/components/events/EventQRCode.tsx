@@ -21,7 +21,7 @@ export default function EventQRCode({
   const eventUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/e/${shareCode}`
-      : `https://event-meena.com/e/${shareCode}`;
+      : `https://events.meena.sa/e/${shareCode}`;
 
   const handleDownload = () => {
     if (!qrRef.current) return;

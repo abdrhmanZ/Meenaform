@@ -22,7 +22,8 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 
     public virtual async Task<T?> GetByIdAsync(Guid id)
     {
-        return await _dbSet.FindAsync(id);
+        // استخدام FirstOrDefaultAsync بدل FindAsync لأن FindAsync يتجاوز NoTracking
+        return await _dbSet.FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public virtual async Task<IReadOnlyList<T>> GetAllAsync()
@@ -65,7 +66,13 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 
     public virtual void Update(T entity)
     {
-        _dbSet.Update(entity);
+        // التحقق من أن الـ entity متتبعة — لو لا، نعمل Attach
+        var entry = _context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            _dbSet.Attach(entity);
+            entry.State = EntityState.Modified;
+        }
     }
 
     public virtual void UpdateRange(IEnumerable<T> entities)

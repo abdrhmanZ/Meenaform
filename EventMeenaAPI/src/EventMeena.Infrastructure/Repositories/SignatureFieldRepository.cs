@@ -33,8 +33,8 @@ public class SignatureFieldRepository : GenericRepository<SignatureField>, ISign
 
     public async Task DeleteByEventIdAsync(Guid eventId)
     {
-        var fields = await _dbSet.Where(sf => sf.EventId == eventId).ToListAsync();
-        _dbSet.RemoveRange(fields);
+        // ✅ حذف مباشر بدون تحميل الـ entities في الذاكرة
+        await _dbSet.Where(sf => sf.EventId == eventId).ExecuteDeleteAsync();
     }
 }
 

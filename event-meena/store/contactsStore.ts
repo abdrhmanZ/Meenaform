@@ -73,15 +73,6 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // جلب جميع جهات الاتصال - متصل بـ Backend API
   // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchContacts: async () => {
-    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
-    const state = get();
-    if (state.contacts.length > 0 && !state.error) {
-      if (state.isLoading) {
-        set({ isLoading: false });
-      }
-      return;
-    }
-
     // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
     if (pendingFetchContacts) {
       await pendingFetchContacts;
@@ -233,15 +224,6 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
   // جلب جميع المجموعات - متصل بـ Backend API
   // محسّن: يستخدم الـ cache لو البيانات موجودة + يمنع الاستدعاءات المتكررة
   fetchGroups: async () => {
-    // ✅ لو البيانات موجودة في الـ store، لا نحتاج API call
-    const state = get();
-    if (state.groups.length > 0 && !state.error) {
-      if (state.isLoading) {
-        set({ isLoading: false });
-      }
-      return;
-    }
-
     // ✅ لو فيه طلب شغال، ننتظره بدل ما نرسل طلب جديد
     if (pendingFetchGroups) {
       await pendingFetchGroups;
