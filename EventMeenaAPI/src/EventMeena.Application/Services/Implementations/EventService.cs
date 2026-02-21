@@ -286,9 +286,8 @@ public class EventService : IEventService
         // تحديث الأقسام والمكونات
         if (request.Sections != null)
         {
-            // حذف الأقسام والمكونات القديمة
-            var existingSections = await _unitOfWork.Sections.GetByEventIdWithComponentsAsync(id);
-            foreach (var section in existingSections)
+            // حذف الأقسام والمكونات القديمة (نستخدم الأقسام المحمّلة مع الحدث بدل query جديد)
+            foreach (var section in evt.Sections.ToList())
             {
                 foreach (var component in section.Components.ToList())
                 {

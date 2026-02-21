@@ -29,7 +29,7 @@ public class ResponseConfiguration : IEntityTypeConfiguration<Response>
 
         builder.Property(r => r.AnswersJson)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         // Relationship with Event
         builder.HasOne(r => r.Event)

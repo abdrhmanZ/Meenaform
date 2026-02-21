@@ -25,7 +25,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(
+            options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
                 b =>
                 {
@@ -33,7 +33,7 @@ public static class ServiceExtensions
                     b.EnableRetryOnFailure(
                         maxRetryCount: 5,
                         maxRetryDelay: TimeSpan.FromSeconds(30),
-                        errorNumbersToAdd: null);
+                        errorCodesToAdd: null);
                 }));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

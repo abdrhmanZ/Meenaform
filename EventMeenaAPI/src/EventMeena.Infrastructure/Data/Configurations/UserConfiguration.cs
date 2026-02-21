@@ -30,7 +30,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(20);
 
         builder.Property(u => u.ProfileImage)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         builder.Property(u => u.RefreshToken)
             .HasMaxLength(500);

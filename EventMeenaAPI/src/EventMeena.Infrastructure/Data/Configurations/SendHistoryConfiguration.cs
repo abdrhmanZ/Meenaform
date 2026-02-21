@@ -22,7 +22,7 @@ public class SendHistoryConfiguration : IEntityTypeConfiguration<SendHistory>
             .HasMaxLength(500);
 
         builder.Property(s => s.Message)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         builder.Property(s => s.ErrorMessage)
             .HasMaxLength(1000);

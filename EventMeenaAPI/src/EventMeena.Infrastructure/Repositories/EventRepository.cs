@@ -115,7 +115,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task IncrementViewCountAsync(Guid eventId)
     {
         await _context.Database.ExecuteSqlRawAsync(
-            "UPDATE Events SET ViewCount = ViewCount + 1 WHERE Id = {0}", eventId);
+            "UPDATE \"Events\" SET \"ViewCount\" = \"ViewCount\" + 1 WHERE \"Id\" = {0}", eventId);
         // فصل الـ Event المحدد فقط (لو كان متتبع) بدل مسح كل الـ entities
         var trackedEvent = _context.ChangeTracker.Entries<Event>()
             .FirstOrDefault(e => e.Entity.Id == eventId);
@@ -126,7 +126,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
     public async Task IncrementResponseCountAsync(Guid eventId)
     {
         await _context.Database.ExecuteSqlRawAsync(
-            "UPDATE Events SET ResponseCount = ResponseCount + 1 WHERE Id = {0}", eventId);
+            "UPDATE \"Events\" SET \"ResponseCount\" = \"ResponseCount\" + 1 WHERE \"Id\" = {0}", eventId);
         // فصل الـ Event المحدد فقط (لو كان متتبع) بدل مسح كل الـ entities
         var trackedEvent = _context.ChangeTracker.Entries<Event>()
             .FirstOrDefault(e => e.Entity.Id == eventId);

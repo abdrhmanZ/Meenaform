@@ -164,7 +164,7 @@ builder.Services.AddSwaggerGen(options =>
 // 3. Database Configuration
 // ===========================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b =>
         {
@@ -173,7 +173,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             b.EnableRetryOnFailure(
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(30),
-                errorNumbersToAdd: null);
+                errorCodesToAdd: null);
         }));
 
 // ===========================================

@@ -22,13 +22,13 @@ public class ComponentConfiguration : IEntityTypeConfiguration<Component>
             .HasMaxLength(200);
             
         builder.Property(c => c.OptionsJson)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
             
         builder.Property(c => c.ValidationJson)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
             
         builder.Property(c => c.CorrectAnswerJson)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
             
         builder.Property(c => c.Explanation)
             .HasMaxLength(2000);
@@ -46,7 +46,7 @@ public class ComponentConfiguration : IEntityTypeConfiguration<Component>
             .HasMaxLength(50);
             
         builder.Property(c => c.StyleJson)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
             
         // Relationship with Section
         builder.HasOne(c => c.Section)

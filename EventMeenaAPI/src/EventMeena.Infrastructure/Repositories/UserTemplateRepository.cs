@@ -50,7 +50,7 @@ public class UserTemplateRepository : GenericRepository<UserTemplate>, IUserTemp
     public async Task IncrementUsageCountAsync(Guid templateId)
     {
         await _context.Database.ExecuteSqlRawAsync(
-            "UPDATE UserTemplates SET UsageCount = UsageCount + 1 WHERE Id = {0}", templateId);
+            "UPDATE \"UserTemplates\" SET \"UsageCount\" = \"UsageCount\" + 1 WHERE \"Id\" = {0}", templateId);
     }
 }
 

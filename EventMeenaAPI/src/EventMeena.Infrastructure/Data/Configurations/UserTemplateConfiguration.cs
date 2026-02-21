@@ -24,7 +24,7 @@ public class UserTemplateConfiguration : IEntityTypeConfiguration<UserTemplate>
             
         builder.Property(t => t.TemplateDataJson)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
             
         // Relationship with User
         builder.HasOne(t => t.User)
