@@ -334,7 +334,7 @@ function ParticipantDetailsPageContent() {
                     <p className="text-sm text-gray-600 mb-1">الجهاز المستخدم</p>
                     <p className="font-semibold text-gray-900">
                       {response.metadata.device === "mobile" ? "هاتف محمول" :
-                       response.metadata.device === "tablet" ? "تابلت" : "كمبيوتر"}
+                        response.metadata.device === "tablet" ? "تابلت" : "كمبيوتر"}
                     </p>
                   </div>
                 </div>
@@ -371,12 +371,12 @@ function ParticipantDetailsPageContent() {
           </Card>
 
           {/* Answers Section */}
-          <Card className="p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <Card className="p-4 sm:p-8">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
                 📝 الإجابات التفصيلية
               </h2>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 جميع إجابات المشارك على أسئلة ومكونات الحدث
               </p>
             </div>

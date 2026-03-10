@@ -10,7 +10,7 @@ import { documentSigningService } from "@/lib/api/services";
 import { Event } from "@/types/event";
 import { DocumentSigningEvent } from "@/types/document-signing";
 import { ParticipantInfo } from "@/types/response";
-import { Loader2, Calendar, Clock, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, Clock, AlertCircle, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import ParticipateHeader from "@/components/events/participate/ParticipateHeader";
@@ -26,6 +26,11 @@ import Link from "next/link";
 const DocumentSigningParticipation = dynamic(
   () => import("@/components/events/document-signing/DocumentSigningParticipation"),
   { ssr: false, loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> }
+);
+
+const RandomDrawRegistration = dynamic(
+  () => import("@/components/competition/RandomDrawRegistration"),
+  { ssr: false, loading: () => <div className="min-h-screen bg-amber-50 flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-amber-500" /></div> }
 );
 
 export default function EventParticipatePage() {
@@ -128,6 +133,11 @@ export default function EventParticipatePage() {
       setShowParticipantForm(false);
     }
   }, [currentEvent, user]);
+
+  // تحقق مبكر: للسحب العشوائي نُحوّل لمكون خاص
+  const isRandomDraw =
+    currentEvent?.type === "competition" &&
+    currentEvent?.settings?.competitionMode === "random_draw";
 
   const validateEvent = (event: Event) => {
     // 1. التحقق من حالة الحدث
@@ -272,8 +282,78 @@ export default function EventParticipatePage() {
     );
   }
 
-  // إذا كان الحدث يتطلب معلومات المشارك ولم يتم إدخالها بعد
-  // (سواء كان requireAuth مفعّل أو الحدث خاص)
+  // ===== السحب العشوائي: مسار منفصل وخاص =====
+  // يُعرض مباشرةً بعد التحقق من صلاحية الحدث
+  if (isRandomDraw) {
+    return <RandomDrawRegistration event={currentEvent} />;
+  }
+
+  // ===== مسابقة الأسئلة (quiz_draw): نطلب الاسم أولاً =====
+  const isQuizDraw =
+    currentEvent?.type === "competition" &&
+    currentEvent?.settings?.competitionMode === "quiz_draw";
+
+  if (isQuizDraw && !participantInfo && !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-yellow-50">
+        <ParticipateHeader creatorName={currentEvent.userId || ""} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-lg mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-amber-100">
+              <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-6 text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Trophy className="w-7 h-7 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-1">{currentEvent.title}</h2>
+                <p className="text-amber-100 text-sm">أجب على الأسئلة للتأهل للسحب</p>
+              </div>
+              <div className="p-6">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const name = formData.get("name") as string;
+                    if (name.trim()) {
+                      setParticipantInfo({ name: name.trim() });
+                      setShowParticipantForm(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      اسمك الكامل
+                    </label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="أدخل اسمك..."
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-base"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-base rounded-xl shadow-md shadow-amber-200/50"
+                  >
+                    بدء المسابقة
+                  </Button>
+                </form>
+                {currentEvent.settings.qualifyingScore && (
+                  <p className="text-center text-xs text-gray-500 mt-4">
+                    درجة التأهل للسحب: {currentEvent.settings.qualifyingScore}%
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <ParticipateFooter />
+      </div>
+    );
+  }
+
+  // نموذج معلومات المشارك للأحداث التي تتطلب تسجيل أو خاصة
   const needsParticipantForm =
     (currentEvent.settings.requireAuth || currentEvent.settings.isPrivate) &&
     !user &&

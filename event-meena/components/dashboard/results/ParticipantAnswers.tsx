@@ -167,9 +167,8 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
               {Array.from({ length: maxRating }, (_, i) => (
                 <Star
                   key={i}
-                  className={`w-6 h-6 ${
-                    i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-                  }`}
+                  className={`w-6 h-6 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                    }`}
                 />
               ))}
             </div>
@@ -279,9 +278,9 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
             </head>
             <body>
               ${isVideo
-                ? `<video controls autoplay><source src="${file.fileData}" type="${file.fileType}"></video>`
-                : `<iframe src="${file.fileData}"></iframe>`
-              }
+            ? `<video controls autoplay><source src="${file.fileData}" type="${file.fileType}"></video>`
+            : `<iframe src="${file.fileData}"></iframe>`
+          }
             </body>
           </html>
         `);
@@ -503,20 +502,20 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
         const settings = component.settings as any;
 
         return (
-          <Card key={component.id} className="p-6">
+          <Card key={component.id} className="p-4 sm:p-6">
             {/* Question Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <span className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary font-bold text-xs sm:text-sm flex-shrink-0">
                     {index + 1}
                   </span>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
                     {settings.label || settings.question || "سؤال بدون عنوان"}
                   </h3>
                 </div>
                 {settings.description && (
-                  <p className="text-gray-600 text-sm mr-11">{settings.description}</p>
+                  <p className="text-gray-600 text-sm mr-8 sm:mr-11">{settings.description}</p>
                 )}
               </div>
 
@@ -539,13 +538,13 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
             </div>
 
             {/* Answer */}
-            <div className="mr-11 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="mr-0 sm:mr-11 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
               {renderAnswer(component, answer)}
             </div>
 
             {/* Points (for quizzes) */}
             {answer && answer.pointsEarned !== undefined && (
-              <div className="mr-11 mt-3 flex items-center gap-2 text-sm">
+              <div className="mr-0 sm:mr-11 mt-3 flex items-center gap-2 text-sm">
                 <span className="text-gray-600">النقاط المكتسبة:</span>
                 <span className="font-bold text-primary">
                   {answer.pointsEarned}

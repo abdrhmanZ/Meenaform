@@ -49,5 +49,20 @@ public interface IEventService
     /// الحصول على إحصائيات لوحة التحكم
     /// </summary>
     Task<ApiResponse<DashboardStatsDto>> GetDashboardStatsAsync(Guid userId);
+
+    /// <summary>
+    /// إجراء السحب العشوائي للفائزين من المشاركين المؤهلين
+    /// </summary>
+    Task<ApiResponse<DrawResultDto>> DrawWinnersAsync(Guid eventId, Guid userId, int winnersCount, List<string>? winnerResponseIds = null);
+
+    /// <summary>
+    /// تحديث إعدادات مشاركة النتائج
+    /// </summary>
+    Task<ApiResponse<string>> UpdateResultsSharingAsync(Guid eventId, Guid userId, ShareResultsRequest request);
+
+    /// <summary>
+    /// الوصول للنتائج المشاركة (بدون مصادقة — عبر token + email)
+    /// </summary>
+    Task<ApiResponse<SharedResultsDataDto>> AccessSharedResultsAsync(string token, string email);
 }
 

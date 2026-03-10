@@ -25,5 +25,10 @@ public class CreateEventRequest
     public bool ShuffleQuestions { get; set; }
     public bool ShuffleOptions { get; set; }
     public int? PassingScore { get; set; }
+
+    // إعدادات المسابقة
+    public string? CompetitionMode { get; set; }
+    public int WinnersCount { get; set; } = 1;
+    public int? QualifyingScore { get; set; }
 }
 

@@ -40,6 +40,7 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
 
   // Guard: التأكد من وجود sections
   const hasSections = event.sections && event.sections.length > 0;
+
   const currentSection = hasSections ? event.sections[currentSectionIndex] : null;
   const isLastSection = hasSections ? currentSectionIndex === event.sections.length - 1 : true;
   const isFirstSection = currentSectionIndex === 0;
@@ -209,7 +210,7 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
     );
   }
 
-  // إذا لم توجد sections، عرض رسالة خطأ
+  // إذا لم توجد sections، عرض رسالة خطأ (لن يحدث للسحب العشوائي لأنه يمر عبر RandomDrawRegistration)
   if (!hasSections) {
     return (
       <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -270,8 +271,8 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
   // Get answers for current section
   const currentSectionAnswers = currentSection
     ? answers.filter((answer) =>
-        currentSection.components.some((comp) => comp.id === answer.componentId)
-      )
+      currentSection.components.some((comp) => comp.id === answer.componentId)
+    )
     : [];
 
   // Check if current section is complete
@@ -513,13 +514,13 @@ export default function ResponseForm({ event, participantInfo, isPreviewMode = f
 
       {/* Current Section */}
       {currentSection && (
-      <SectionView
-        section={currentSection}
-        answers={currentSectionAnswers}
-        onAnswerChange={handleAnswerChange}
-        eventType={event.type}
-        isPreviewMode={isPreviewMode}
-      />
+        <SectionView
+          section={currentSection}
+          answers={currentSectionAnswers}
+          onAnswerChange={handleAnswerChange}
+          eventType={event.type}
+          isPreviewMode={isPreviewMode}
+        />
       )}
 
       {/* Navigation Buttons */}

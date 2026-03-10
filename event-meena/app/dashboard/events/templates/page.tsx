@@ -26,6 +26,8 @@ import {
   Copy,
   Edit,
   MoreVertical,
+  PenTool,
+  Trophy,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -181,6 +183,90 @@ function TemplatesPageContent() {
                 جديدة، حذف ما لا تحتاجه، وتخصيص كل شيء حسب احتياجاتك.
               </p>
             </div>
+          </div>
+        </Card>
+
+        {/* Document Signing Featured Card */}
+        <Card className="p-6 bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-200 hover:shadow-lg transition-all duration-200 hover:border-teal-300 group cursor-pointer"
+          onClick={() => router.push("/dashboard/events/new/document-signing")}>
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:from-teal-200 group-hover:to-emerald-200 transition-colors">
+              <PenTool className="w-8 h-8 text-teal-600" />
+            </div>
+            <div className="flex-1 text-center md:text-right">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                توقيع وثيقة
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                أنشئ وثائق للتوقيع الإلكتروني — ارفع ملف PDF وحدد حقول التوقيع بسهولة. يدعم التوقيع اليدوي والطباعي.
+              </p>
+              <div className="flex items-center gap-4 text-xs text-teal-700 justify-center md:justify-start flex-wrap">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                  توقيع إلكتروني
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                  رفع PDF
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                  إدارة حقول التوقيع
+                </span>
+              </div>
+            </div>
+            <Button
+              className="bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-600/20 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push("/dashboard/events/new/document-signing");
+              }}
+            >
+              <ArrowRight className="w-4 h-4 ml-2" />
+              إنشاء وثيقة توقيع
+            </Button>
+          </div>
+        </Card>
+
+        {/* Competition Featured Card */}
+        <Card className="p-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 hover:shadow-lg transition-all duration-200 hover:border-amber-300 group cursor-pointer"
+          onClick={() => router.push("/dashboard/events/new/competition")}>
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:from-amber-200 group-hover:to-yellow-200 transition-colors">
+              <Trophy className="w-8 h-8 text-amber-600" />
+            </div>
+            <div className="flex-1 text-center md:text-right">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                مسابقة وسحب عشوائي
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                أنشئ مسابقة أسئلة أو سحب عشوائي واختر الفائزين بعجلة الحظ التفاعلية الاحترافية.
+              </p>
+              <div className="flex items-center gap-4 text-xs text-amber-700 justify-center md:justify-start flex-wrap">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  عجلة حظ تفاعلية
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  مسابقة أسئلة
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  سحب عشوائي
+                </span>
+              </div>
+            </div>
+            <Button
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/20 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push("/dashboard/events/new/competition");
+              }}
+            >
+              <ArrowRight className="w-4 h-4 ml-2" />
+              إنشاء مسابقة
+            </Button>
           </div>
         </Card>
 
@@ -463,7 +549,7 @@ function TemplatesPageContent() {
           </div>
         </Card>
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 }
 

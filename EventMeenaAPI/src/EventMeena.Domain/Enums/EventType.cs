@@ -9,6 +9,7 @@ public enum EventType
     Quiz = 2,               // اختبار
     Form = 3,               // نموذج
     Event = 4,              // حدث
-    DocumentSigning = 5     // توقيع وثيقة
+    DocumentSigning = 5,    // توقيع وثيقة
+    Competition = 6         // مسابقة وسحب عشوائي
 }
 

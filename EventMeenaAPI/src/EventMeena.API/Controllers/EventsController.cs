@@ -342,5 +342,37 @@ public class EventsController : BaseApiController
 
         return Success(historyDtos);
     }
+
+    /// <summary>
+    /// إجراء السحب العشوائي للفائزين في مسابقة
+    /// </summary>
+    /// <param name="id">معرف الحدث (مسابقة)</param>
+    /// <param name="request">بيانات السحب (عدد الفائزين)</param>
+    [HttpPost("{id:guid}/draw")]
+    public async Task<ActionResult<ApiResponse<DrawResultDto>>> Draw(Guid id, [FromBody] DrawRequest request)
+    {
+        var result = await _eventService.DrawWinnersAsync(id, CurrentUserId, request.WinnersCount, request.WinnerResponseIds);
+
+        if (!result.Success)
+            return BadRequestResponse<DrawResultDto>(result.Message ?? "فشل إجراء السحب");
+
+        return Success(result.Data!, result.Message ?? "تم إجراء السحب بنجاح");
+    }
+
+    /// <summary>
+    /// تحديث إعدادات مشاركة النتائج
+    /// </summary>
+    /// <param name="id">معرف الحدث</param>
+    /// <param name="request">إعدادات المشاركة</param>
+    [HttpPut("{id:guid}/share-results")]
+    public async Task<ActionResult<ApiResponse<string>>> ShareResults(Guid id, [FromBody] ShareResultsRequest request)
+    {
+        var result = await _eventService.UpdateResultsSharingAsync(id, CurrentUserId, request);
+
+        if (!result.Success)
+            return BadRequestResponse<string>(result.Message ?? "فشل تحديث إعدادات المشاركة");
+
+        return Success(result.Data!, result.Message ?? "تم تحديث إعدادات المشاركة");
+    }
 }
 

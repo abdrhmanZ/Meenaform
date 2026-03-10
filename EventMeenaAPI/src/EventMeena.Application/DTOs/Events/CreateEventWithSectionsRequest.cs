@@ -38,6 +38,11 @@ public class CreateEventWithSectionsRequest
     public bool IsPrivate { get; set; }
     public List<string>? AllowedEmails { get; set; }
 
+    // إعدادات المسابقة
+    public string? CompetitionMode { get; set; }
+    public int WinnersCount { get; set; } = 1;
+    public int? QualifyingScore { get; set; }
+
     /// <summary>
     /// الأقسام مع مكوناتها
     /// </summary>

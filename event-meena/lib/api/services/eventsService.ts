@@ -169,7 +169,7 @@ export const eventsService = {
    * Backend يُرجع List<EventListItemDto>
    */
   getByType: async (type: EventType): Promise<Event[]> => {
-    const typeNumber = { survey: 1, quiz: 2, form: 3, poll: 4, document_signing: 5 }[type];
+    const typeNumber = { survey: 1, quiz: 2, form: 3, poll: 4, document_signing: 5, competition: 6 }[type];
     const response = await apiClient.get<ApiResponse<BackendEventListItemDto[]>>(
       `/Events/by-type/${typeNumber}`
     );
@@ -436,6 +436,68 @@ export const eventsService = {
       console.error("Failed to fetch dashboard stats:", error);
       return null;
     }
+  },
+
+  /**
+   * إجراء السحب العشوائي للفائزين في مسابقة
+   */
+  drawWinners: async (eventId: string, winnersCount: number, winnerResponseIds?: string[]): Promise<{
+    winners: Array<{ responseId: string; participantName: string; participantEmail?: string; rank: number; score?: number }>;
+    totalParticipants: number;
+    qualifiedCount: number;
+  }> => {
+    const response = await apiClient.post<ApiResponse<{
+      winners: Array<{ responseId: string; participantName: string; participantEmail?: string; rank: number; score?: number }>;
+      totalParticipants: number;
+      qualifiedCount: number;
+    }>>(`/Events/${eventId}/draw`, { winnersCount, winnerResponseIds: winnerResponseIds || null });
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || "فشل إجراء السحب");
+    }
+
+    return response.data.data;
+  },
+
+  /**
+   * تحديث إعدادات مشاركة النتائج
+   */
+  updateResultsSharing: async (eventId: string, data: {
+    isEnabled: boolean;
+    allowedEmails: string[];
+    permissions: { allowExport: boolean; allowDraw: boolean };
+  }): Promise<string> => {
+    const response = await apiClient.put<ApiResponse<string>>(
+      `/Events/${eventId}/share-results`,
+      data
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "فشل تحديث إعدادات المشاركة");
+    }
+
+    return response.data.data!;
+  },
+
+  /**
+   * الوصول للنتائج المشاركة (Public - بدون تسجيل دخول)
+   */
+  accessSharedResults: async (token: string, email: string): Promise<{
+    event: any;
+    responses: any[];
+    permissions: { allowExport: boolean; allowDraw: boolean };
+  }> => {
+    const response = await apiClient.post<ApiResponse<{
+      event: any;
+      responses: any[];
+      permissions: { allowExport: boolean; allowDraw: boolean };
+    }>>(`/Public/shared-results/${token}/access`, { email });
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || "فشل الوصول للنتائج");
+    }
+
+    return response.data.data;
   },
 };
 

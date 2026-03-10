@@ -6,7 +6,7 @@ import { Section } from "./section";
 /**
  * أنواع الأحداث
  */
-export type EventType = "survey" | "poll" | "form" | "quiz" | "document_signing";
+export type EventType = "survey" | "poll" | "form" | "quiz" | "document_signing" | "competition";
 
 /**
  * حالات الأحداث
@@ -129,6 +129,22 @@ export interface EventSettings {
   // الحدث الخاص (Private Event)
   isPrivate?: boolean; // هل الحدث خاص؟
   allowedEmails?: string[]; // قائمة الإيميلات المسموح لها بالدخول
+
+  // إعدادات المسابقة (Competition)
+  competitionMode?: "quiz_draw" | "random_draw"; // نوع المسابقة
+  winnersCount?: number; // عدد الفائزين
+  qualifyingScore?: number; // درجة التأهل (للمسابقة بأسئلة)
+  drawCompleted?: boolean; // هل تم السحب؟
+  winners?: string[]; // قائمة معرّفات الردود الفائزة
+
+  // مشاركة النتائج
+  resultsShareToken?: string;
+  isResultsShared?: boolean;
+  resultsSharedEmails?: string[];
+  resultsSharePermissions?: {
+    allowExport: boolean;
+    allowDraw: boolean;
+  };
 }
 
 /**
@@ -148,6 +164,10 @@ export interface EventStats {
   highestScore?: number;
   lowestScore?: number;
   passRate?: number;
+
+  // للمسابقات
+  qualifiedCount?: number; // عدد المؤهلين للسحب
+  drawCompleted?: boolean; // هل تم السحب
 }
 
 /**

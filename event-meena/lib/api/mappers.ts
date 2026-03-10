@@ -146,6 +146,17 @@ export interface BackendEventDto {
   // إعدادات الحدث الخاص
   isPrivate: boolean;
   allowedEmails: string[] | null;
+  // إعدادات المسابقة
+  competitionMode: string | null;
+  winnersCount: number;
+  qualifyingScore: number | null;
+  drawCompleted: boolean;
+  winnersJson: string | null;
+  // مشاركة النتائج
+  resultsShareToken: string | null;
+  isResultsShared: boolean;
+  resultsSharedEmails: string[] | null;
+  resultsSharePermissions: { allowExport: boolean; allowDraw: boolean } | null;
   viewCount: number;
   responseCount: number;
   createdAt: string;
@@ -294,8 +305,9 @@ const mapEventType = (type: number): EventType => {
     1: "survey",            // Survey = 1
     2: "quiz",              // Quiz = 2
     3: "form",              // Form = 3
-    4: "poll",              // Event = 4 (نعتبره poll في الـ Frontend)
+    4: "poll",              // Event = 4
     5: "document_signing",  // DocumentSigning = 5
+    6: "competition",       // Competition = 6
   };
   return types[type] || "survey";
 };
@@ -352,6 +364,17 @@ export const mapEvent = (backend: BackendEventDto): Event => ({
     // إعدادات الحدث الخاص
     isPrivate: backend.isPrivate || false,
     allowedEmails: backend.allowedEmails || [],
+    // إعدادات المسابقة
+    competitionMode: (backend.competitionMode as "quiz_draw" | "random_draw" | undefined) || undefined,
+    winnersCount: backend.winnersCount || 1,
+    qualifyingScore: backend.qualifyingScore || undefined,
+    drawCompleted: backend.drawCompleted || false,
+    winners: backend.winnersJson ? (() => { try { return JSON.parse(backend.winnersJson!); } catch { return []; } })() : undefined,
+    // مشاركة النتائج
+    resultsShareToken: backend.resultsShareToken || undefined,
+    isResultsShared: backend.isResultsShared || false,
+    resultsSharedEmails: backend.resultsSharedEmails || [],
+    resultsSharePermissions: backend.resultsSharePermissions || { allowExport: false, allowDraw: false },
   },
   stats: {
     totalResponses: backend.responseCount,
@@ -711,13 +734,14 @@ export const mapEventWithFullDetails = (backend: BackendEventWithFullDetailsDto)
  */
 const mapEventTypeToNumber = (type: EventType): number => {
   const types: Record<EventType, number> = {
-    survey: 1,  // Survey = 1
-    quiz: 2,    // Quiz = 2
-    form: 3,    // Form = 3
-    poll: 4,    // Event = 4 (poll في الـ Frontend = Event في الـ Backend)
-    document_signing: 5, // DocumentSigning = 5
+    survey: 1,
+    quiz: 2,
+    form: 3,
+    poll: 4,
+    document_signing: 5,
+    competition: 6,
   };
-  return types[type] ?? 1; // Default: Survey
+  return types[type] ?? 1;
 };
 
 /**
@@ -779,6 +803,10 @@ export const mapEventFormToBackend = (data: EventFormData) => ({
   passingScore: data.settings?.passingScore || null,
   startDate: data.settings?.startDate || null,
   endDate: data.settings?.endDate || null,
+  // إعدادات المسابقة
+  competitionMode: data.settings?.competitionMode || null,
+  winnersCount: data.settings?.winnersCount || 1,
+  qualifyingScore: data.settings?.qualifyingScore || null,
 });
 
 /**
@@ -1030,6 +1058,10 @@ export const mapEventWithSectionsToBackend = (event: Event) => ({
   // إعدادات الحدث الخاص
   isPrivate: event.settings?.isPrivate || false,
   allowedEmails: event.settings?.allowedEmails || null,
+  // إعدادات المسابقة
+  competitionMode: event.settings?.competitionMode || null,
+  winnersCount: event.settings?.winnersCount || 1,
+  qualifyingScore: event.settings?.qualifyingScore || null,
   sections: event.sections?.map((section, idx) => mapSectionToBackend(section, idx)) || [],
 });
 

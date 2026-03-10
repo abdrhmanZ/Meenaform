@@ -74,6 +74,23 @@ public class PublicController : BaseApiController
             Version = "1.0.0"
         }, "API is running");
     }
+
+    /// <summary>
+    /// الوصول للنتائج المشاركة (بدون مصادقة)
+    /// </summary>
+    /// <param name="token">رمز مشاركة النتائج</param>
+    /// <param name="request">بيانات الوصول (الإيميل)</param>
+    [HttpPost("shared-results/{token}/access")]
+    public async Task<ActionResult<ApiResponse<SharedResultsDataDto>>> AccessSharedResults(
+        string token, [FromBody] SharedResultsAccessRequest request)
+    {
+        var result = await _eventService.AccessSharedResultsAsync(token, request.Email);
+
+        if (!result.Success)
+            return BadRequestResponse<SharedResultsDataDto>(result.Message ?? "فشل الوصول للنتائج");
+
+        return Success(result.Data!);
+    }
 }
 
 /// <summary>

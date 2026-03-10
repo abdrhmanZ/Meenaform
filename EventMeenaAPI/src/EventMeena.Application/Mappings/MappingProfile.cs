@@ -28,7 +28,9 @@ public class MappingProfile : Profile
 
         // Event Mappings
         CreateMap<Event, EventDto>()
-            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)));
+            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.ResultsSharedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharePermissions, opt => opt.MapFrom(src => ParseSharePermissions(src.ResultsSharePermissionsJson)));
         CreateMap<Event, EventListItemDto>()
             .ForMember(dest => dest.SectionsCount, opt => opt.MapFrom(src => src.Sections.Count))
             .ForMember(dest => dest.ComponentsCount, opt => opt.MapFrom(src =>
@@ -40,9 +42,13 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.SignaturesCount, opt => opt.MapFrom(src =>
                 src.SignatureFields != null ? src.SignatureFields.Sum(sf => sf.Signatures != null ? sf.Signatures.Count : 0) : 0));
         CreateMap<Event, EventWithSectionsDto>()
-            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)));
+            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.ResultsSharedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharePermissions, opt => opt.MapFrom(src => ParseSharePermissions(src.ResultsSharePermissionsJson)));
         CreateMap<Event, EventWithFullDetailsDto>()
-            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)));
+            .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.ResultsSharedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharePermissions, opt => opt.MapFrom(src => ParseSharePermissions(src.ResultsSharePermissionsJson)));
         CreateMap<CreateEventRequest, Event>();
         CreateMap<CreateEventWithSectionsRequest, Event>();
         CreateMap<UpdateEventRequest, Event>()
@@ -112,7 +118,9 @@ public class MappingProfile : Profile
         // Document Signing Mappings
         CreateMap<Event, EventWithSignatureFieldsDto>()
             .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
-            .ForMember(dest => dest.SignatureFields, opt => opt.Ignore()); // يتم تعيينها يدوياً
+            .ForMember(dest => dest.ResultsSharedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.ResultsSharedEmailsJson)))
+            .ForMember(dest => dest.ResultsSharePermissions, opt => opt.MapFrom(src => ParseSharePermissions(src.ResultsSharePermissionsJson)))
+            .ForMember(dest => dest.SignatureFields, opt => opt.Ignore());
 
         CreateMap<SignatureField, SignatureFieldDto>();
         CreateMap<CreateSignatureFieldRequest, SignatureField>();
@@ -164,6 +172,24 @@ public class MappingProfile : Profile
         try
         {
             return JsonSerializer.Deserialize<List<string>>(allowedEmailsJson);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// تحويل JSON string إلى كائن صلاحيات مشاركة النتائج
+    /// </summary>
+    private static ResultsSharePermissionsDto? ParseSharePermissions(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<ResultsSharePermissionsDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch
         {

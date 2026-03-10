@@ -70,8 +70,10 @@ public class ResponseService : IResponseService
             return ApiResponse<ResponseDto>.FailureResponse("الحدث غير متاح");
 
         // التحقق من AllowMultipleResponses
-        if (!evt.AllowMultipleResponses)
-        {
+    // أحداث المسابقة (السحب العشوائي) تتخطى هذا الفحص لأنها تعتمد على الاسم فقط بدون إيميل
+    // والفحص بالـ IP يمنع مشاركين مختلفين على نفس الشبكة
+    if (!evt.AllowMultipleResponses && evt.Type != EventType.Competition)
+    {
             // التحقق بالإيميل أولاً (أكثر دقة)
             if (!string.IsNullOrEmpty(request.RespondentEmail))
             {

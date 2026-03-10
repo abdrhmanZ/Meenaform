@@ -28,12 +28,15 @@ export default function ThankYouPage({
   const [score, setScore] = useState<ResponseScore | null>(null);
 
   // حساب الدرجة إذا كان الحدث اختبار ولديه تصحيح تلقائي
+  // حساب الدرجة للاختبارات والمسابقات
+  const isQuizDraw = event.type === "competition" && event.settings?.competitionMode === "quiz_draw";
+
   useEffect(() => {
-    if (event.type === "quiz" && answers.length > 0) {
+    if ((event.type === "quiz" || isQuizDraw) && answers.length > 0) {
       const calculatedScore = calculateScore(event, answers);
       setScore(calculatedScore);
     }
-  }, [event, answers]);
+  }, [event, answers, isQuizDraw]);
 
   useEffect(() => {
     // Celebrate with confetti!
@@ -49,6 +52,10 @@ export default function ThankYouPage({
     "شكراً لمشاركتك! تم استلام إجاباتك بنجاح.";
 
   const isQuiz = event.type === "quiz";
+  const isCompetition = event.type === "competition";
+  const isRandomDraw = isCompetition && event.settings?.competitionMode === "random_draw";
+  const qualifyingScore = event.settings?.qualifyingScore || 70;
+  const qualifiedForDraw = isCompetition && !isRandomDraw && score && score.percentage >= qualifyingScore;
   const shouldShowResults = isQuiz && event.settings.showResults && score;
 
   // Get custom result message based on score
@@ -73,6 +80,69 @@ export default function ThankYouPage({
       };
     }
   };
+
+  // عرض رسالة المسابقة
+  if (isCompetition) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-amber-100">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-8 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                {qualifiedForDraw ? <Trophy className="w-8 h-8 text-white" /> : <CheckCircle className="w-8 h-8 text-white" />}
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-2">
+                {isRandomDraw
+                  ? "تم تسجيلك بنجاح!"
+                  : qualifiedForDraw
+                    ? "مبروك! تأهلت للسحب"
+                    : "شكراً على مشاركتك"}
+              </h2>
+              <p className="text-amber-100 text-sm">{event.title}</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 text-center space-y-4">
+              {isRandomDraw ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-amber-800 font-semibold text-lg mb-1">انتظر إجراء السحب</p>
+                  <p className="text-amber-700 text-sm">اسمك مضاف الآن في قائمة السحب. سنعلن عن الفائزين قريباً.</p>
+                </div>
+              ) : qualifiedForDraw ? (
+                <div className="space-y-3">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-green-800 font-bold text-lg">حققت {score?.percentage}%</p>
+                    <p className="text-green-700 text-sm">تأهلت للسحب العشوائي على الجوائز</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <p className="text-amber-800 text-sm">سيتم إجراء السحب العشوائي من بين جميع المتأهلين لاختيار الفائزين</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-blue-800 font-bold">حصلت على {score?.percentage}%</p>
+                    <p className="text-blue-700 text-sm">للتأهل للسحب تحتاج {qualifyingScore}% أو أكثر</p>
+                  </div>
+                  <p className="text-gray-600 text-sm">{event.settings.thankYouMessage || "شكراً لمشاركتك في المسابقة!"}</p>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Link href="/">
+                  <Button variant="outline" className="gap-2">
+                    <Home className="w-4 h-4" />
+                    العودة للرئيسية
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // عرض النتائج إذا تم الضغط على الزر أو إذا كان يجب عرضها تلقائياً
   if (showResults && shouldShowResults) {

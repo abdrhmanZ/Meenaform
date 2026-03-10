@@ -2,7 +2,7 @@
 
 import { Event } from "@/types/event";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, FileText, HelpCircle, ClipboardList, Target, PenTool } from "lucide-react";
+import { Calendar, Clock, FileText, HelpCircle, ClipboardList, Target, PenTool, Trophy, Dice6, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -51,11 +51,21 @@ const eventTypeConfig: Record<string, { label: string; icon: any; color: string;
     borderColor: "border-teal-200",
     headerBg: "bg-gradient-to-r from-teal-500 to-teal-600",
   },
+  competition: {
+    label: "مسابقة",
+    icon: Trophy,
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-200",
+    headerBg: "bg-gradient-to-r from-amber-500 to-yellow-500",
+  },
 };
 
 export default function EventInfo({ event }: EventInfoProps) {
-  const typeConfig = eventTypeConfig[event.type];
+  const typeConfig = eventTypeConfig[event.type] ?? eventTypeConfig["survey"];
   const TypeIcon = typeConfig.icon;
+  const isCompetition = event.type === "competition";
+  const isRandomDraw = isCompetition && event.settings?.competitionMode === "random_draw";
 
   const totalComponents = event.sections.reduce(
     (sum, section) => sum + section.components.length,
@@ -149,6 +159,60 @@ export default function EventInfo({ event }: EventInfoProps) {
               </ul>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Competition layout
+  if (isCompetition) {
+    return (
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden mb-6 sm:mb-8 border border-amber-100">
+        <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-4 sm:p-8 md:p-12 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-5xl mb-4">{isRandomDraw ? "🎲" : "🏆"}</div>
+            <Badge variant="secondary" className="mb-3 sm:mb-4 bg-white/20 text-white border-white/30 px-3 sm:px-4 py-1 text-xs sm:text-sm font-semibold">
+              {isRandomDraw ? "سحب عشوائي" : "مسابقة أسئلة"}
+            </Badge>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
+              {event.title}
+            </h1>
+            {event.description && (
+              <p className="text-white/95 text-sm sm:text-lg leading-relaxed max-w-3xl mx-auto">
+                {event.description}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="p-4 sm:p-6 md:p-8 bg-gradient-to-b from-amber-50 to-white">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+            <div className="text-center p-3 sm:p-5 bg-white rounded-lg sm:rounded-xl border-2 border-amber-100 shadow-sm">
+              <div className="text-2xl sm:text-3xl font-bold text-amber-600 mb-1">{event.settings?.winnersCount || 1}</div>
+              <div className="text-xs sm:text-sm text-gray-600 font-medium">فائز مطلوب</div>
+            </div>
+            {!isRandomDraw && event.settings?.qualifyingScore && (
+              <div className="text-center p-3 sm:p-5 bg-white rounded-lg sm:rounded-xl border-2 border-yellow-100 shadow-sm">
+                <div className="text-2xl sm:text-3xl font-bold text-yellow-600 mb-1">{event.settings.qualifyingScore}%</div>
+                <div className="text-xs sm:text-sm text-gray-600 font-medium">درجة التأهل</div>
+              </div>
+            )}
+            {event.settings?.timeLimit && (
+              <div className="text-center p-3 sm:p-5 bg-white rounded-lg sm:rounded-xl border-2 border-red-100 shadow-sm">
+                <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-1">{event.settings.timeLimit}</div>
+                <div className="text-xs sm:text-sm text-gray-600 font-medium">دقيقة</div>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 p-3 sm:p-5 bg-amber-50 border-2 border-amber-200 rounded-lg sm:rounded-xl">
+            <p className="text-sm text-amber-800 text-center">
+              {isRandomDraw
+                ? "🎲 سجّل اسمك وانتظر إجراء السحب العشوائي لمعرفة الفائزين"
+                : `🏆 أجب على الأسئلة وإذا حققت ${event.settings?.qualifyingScore || 70}% أو أكثر ستدخل السحب العشوائي`}
+            </p>
+          </div>
         </div>
       </div>
     );

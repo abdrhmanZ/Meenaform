@@ -63,6 +63,11 @@ const eventTypeConfig: Record<string, { label: string; color: string; bgColor: s
     color: "text-teal-600",
     bgColor: "bg-teal-50",
   },
+  competition: {
+    label: "مسابقة وسحب",
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+  },
 };
 
 export default function EventDetailsHeader({
@@ -164,8 +169,8 @@ export default function EventDetailsHeader({
               </Link>
             </Button>
 
-            {/* Preview Page - Hidden on mobile, shown in dropdown - Not for document_signing */}
-            {event.type !== "document_signing" && (
+            {/* Preview Page - Hidden on mobile, shown in dropdown - Not for document_signing or competition */}
+            {event.type !== "document_signing" && event.type !== "competition" && (
               <Button
                 asChild
                 variant="outline"
@@ -179,17 +184,19 @@ export default function EventDetailsHeader({
               </Button>
             )}
 
-            {/* Edit */}
-            <Button
-              asChild
-              size="lg"
-              className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30"
-            >
-              <Link href={`/dashboard/events/${event.id}/edit`}>
-                <Edit className="w-5 h-5 ml-2" />
-                <span className="hidden sm:inline">تعديل</span>
-              </Link>
-            </Button>
+            {/* Edit - Not for competition */}
+            {event.type !== "competition" && (
+              <Button
+                asChild
+                size="lg"
+                className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30"
+              >
+                <Link href={`/dashboard/events/${event.id}/edit`}>
+                  <Edit className="w-5 h-5 ml-2" />
+                  <span className="hidden sm:inline">تعديل</span>
+                </Link>
+              </Button>
+            )}
 
             {/* Share - Hidden on mobile, shown in dropdown */}
             <Button
@@ -217,7 +224,7 @@ export default function EventDetailsHeader({
                     عرض النتائج
                   </Link>
                 </DropdownMenuItem>
-                {event.type !== "document_signing" && (
+                {event.type !== "document_signing" && event.type !== "competition" && (
                   <DropdownMenuItem asChild className="md:hidden">
                     <Link href={`/preview/${event.id}`} target="_blank">
                       <Eye className="w-4 h-4 ml-2" />
@@ -230,8 +237,8 @@ export default function EventDetailsHeader({
                   مشاركة
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="md:hidden" />
-                {/* Always visible items - Not for document_signing */}
-                {event.type !== "document_signing" && (
+                {/* Always visible items - Not for document_signing or competition */}
+                {event.type !== "document_signing" && event.type !== "competition" && (
                   <>
                     <DropdownMenuItem onClick={onSaveAsTemplate}>
                       <BookmarkPlus className="w-4 h-4 ml-2" />

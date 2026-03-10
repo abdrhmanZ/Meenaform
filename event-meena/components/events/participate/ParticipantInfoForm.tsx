@@ -24,6 +24,8 @@ interface ParticipantInfoFormProps {
   eventId?: string;
   isPrivateEvent?: boolean;
   allowedEmails?: string[];
+  isCompetition?: boolean;
+  competitionMode?: "quiz_draw" | "random_draw";
   onSubmit: (info: ParticipantInfo) => void;
 }
 
@@ -32,6 +34,8 @@ export default function ParticipantInfoForm({
   eventId,
   isPrivateEvent = false,
   allowedEmails = [],
+  isCompetition = false,
+  competitionMode,
   onSubmit,
 }: ParticipantInfoFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,22 +89,36 @@ export default function ParticipantInfoForm({
     setIsSubmitting(false);
   };
 
+  const isRandomDraw = competitionMode === "random_draw";
+  const themeColor = isCompetition ? "#f59e0b" : "#1a56db";
+  const themeBg = isCompetition ? "bg-amber-500" : "bg-[#1a56db]";
+  const themeHover = isCompetition ? "hover:bg-amber-600" : "hover:bg-[#1648c7]";
+  const themeText = isCompetition ? "text-amber-700" : "text-[#1a56db]";
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className={`min-h-screen flex items-center justify-center p-4 ${isCompetition ? "bg-gradient-to-br from-amber-50 via-white to-yellow-50" : "bg-gray-50"}`}>
       <Card className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 hover:border-gray-300 transition-all duration-300">
         <div className="p-8">
           {/* أيقونة ورأس */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-[#1a56db] rounded-xl flex items-center justify-center mx-auto mb-4">
-              <UserCircle className="w-8 h-8 text-white" />
+            <div className={`w-16 h-16 ${themeBg} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+              {isCompetition ? (
+                <span className="text-3xl">{isRandomDraw ? "🎲" : "🏆"}</span>
+              ) : (
+                <UserCircle className="w-8 h-8 text-white" />
+              )}
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              معلومات المشارك
+              {isCompetition ? (isRandomDraw ? "سجّل في السحب العشوائي" : "سجّل في المسابقة") : "معلومات المشارك"}
             </h1>
             <p className="text-gray-600 text-sm">
-              يرجى إدخال معلوماتك للمتابعة إلى
+              {isCompetition
+                ? (isRandomDraw
+                  ? "أدخل بياناتك للدخول في السحب العشوائي"
+                  : "أدخل بياناتك للمشاركة في المسابقة")
+                : "يرجى إدخال معلوماتك للمتابعة إلى"}
             </p>
-            <p className="text-[#1a56db] font-semibold mt-1">
+            <p className={`${themeText} font-semibold mt-1`}>
               {eventTitle}
             </p>
           </div>
@@ -177,19 +195,27 @@ export default function ParticipantInfoForm({
             )}
 
             {/* ملاحظة */}
-            {!isPrivateEvent && (
+            {isCompetition ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800 text-center">
+                  {isRandomDraw
+                    ? "🎟️ بعد التسجيل ستُضاف تلقائياً لقائمة السحب. بالتوفيق! 🍀"
+                    : "🏆 بعد إجابة الأسئلة وتأهّلك ستدخل السحب العشوائي. بالتوفيق!"}
+                </p>
+              </div>
+            ) : !isPrivateEvent ? (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800 text-center">
                   <span className="font-semibold">ملاحظة:</span> هذه المعلومات ستُستخدم فقط لأغراض التحليل والتواصل معك
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* زر الإرسال */}
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 text-base font-semibold bg-[#1a56db] hover:bg-[#1648c7] text-white transition-colors duration-200"
+              className={`w-full h-12 text-base font-semibold text-white transition-colors duration-200 ${themeBg} ${themeHover}`}
             >
               {isSubmitting ? (
                 <>
@@ -198,7 +224,7 @@ export default function ParticipantInfoForm({
                 </>
               ) : (
                 <>
-                  متابعة إلى الحدث
+                  {isCompetition ? (isRandomDraw ? "🎲 دخول السحب" : "🏆 دخول المسابقة") : "متابعة إلى الحدث"}
                   <ArrowLeft className="w-5 h-5 mr-2" />
                 </>
               )}

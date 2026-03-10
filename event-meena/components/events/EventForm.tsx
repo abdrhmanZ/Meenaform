@@ -34,7 +34,7 @@ const eventFormSchema = z.object({
     .string()
     .min(1, "الوصف مطلوب")
     .min(10, "الوصف يجب أن يكون 10 أحرف على الأقل"),
-  type: z.enum(["survey", "poll", "form", "quiz", "document_signing"], {
+  type: z.enum(["survey", "poll", "form", "quiz", "document_signing", "competition"], {
     message: "نوع الحدث مطلوب",
   }),
   status: z.enum(["draft", "active", "archived"], {
@@ -96,24 +96,24 @@ export default function EventForm({ event, onSubmit, isLoading }: EventFormProps
     resolver: zodResolver(eventFormSchema),
     defaultValues: event
       ? {
-          title: event.title,
-          description: event.description,
-          type: event.type,
-          status: event.status,
-          settings: event.settings,
-        }
+        title: event.title,
+        description: event.description,
+        type: event.type,
+        status: event.status,
+        settings: event.settings,
+      }
       : {
-          title: "",
-          description: "",
-          type: "survey",
-          status: "draft",
-          settings: {
-            allowMultipleResponses: false,
-            showResultsToParticipants: true,
-            requireLogin: false,
-            enableCaptcha: false,
-          },
+        title: "",
+        description: "",
+        type: "survey",
+        status: "draft",
+        settings: {
+          allowMultipleResponses: false,
+          showResultsToParticipants: true,
+          requireLogin: false,
+          enableCaptcha: false,
         },
+      },
   });
 
   const selectedType = watch("type");
@@ -171,23 +171,20 @@ export default function EventForm({ event, onSubmit, isLoading }: EventFormProps
                   key={type.value}
                   type="button"
                   onClick={() => setValue("type", type.value)}
-                  className={`p-4 border-2 rounded-lg text-right transition-all ${
-                    isSelected
+                  className={`p-4 border-2 rounded-lg text-right transition-all ${isSelected
                       ? "border-primary bg-blue-50"
                       : "border-gray-200 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <Icon
-                      className={`w-6 h-6 ${
-                        isSelected ? "text-primary" : "text-gray-400"
-                      }`}
+                      className={`w-6 h-6 ${isSelected ? "text-primary" : "text-gray-400"
+                        }`}
                     />
                     <div>
                       <p
-                        className={`font-semibold ${
-                          isSelected ? "text-primary" : "text-gray-900"
-                        }`}
+                        className={`font-semibold ${isSelected ? "text-primary" : "text-gray-900"
+                          }`}
                       >
                         {type.label}
                       </p>

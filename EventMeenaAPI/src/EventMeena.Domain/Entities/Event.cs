@@ -84,6 +84,53 @@ public class Event : AuditableEntity
     /// </summary>
     public string SigningMode { get; set; } = "single";
 
+    // إعدادات المسابقة (Competition)
+    /// <summary>
+    /// نوع المسابقة: quiz_draw = مسابقة أسئلة + سحب، random_draw = سحب عشوائي فقط
+    /// </summary>
+    public string? CompetitionMode { get; set; }
+
+    /// <summary>
+    /// عدد الفائزين المطلوب
+    /// </summary>
+    public int WinnersCount { get; set; } = 1;
+
+    /// <summary>
+    /// النسبة المئوية للتأهل للسحب (لـ quiz_draw فقط)
+    /// </summary>
+    public int? QualifyingScore { get; set; }
+
+    /// <summary>
+    /// هل تم إجراء السحب العشوائي؟
+    /// </summary>
+    public bool DrawCompleted { get; set; } = false;
+
+    /// <summary>
+    /// قائمة معرّفات الردود الفائزة (JSON Array)
+    /// </summary>
+    public string? WinnersJson { get; set; }
+
+    // إعدادات مشاركة النتائج (Results Sharing)
+    /// <summary>
+    /// رمز مشاركة النتائج الفريد (UUID)
+    /// </summary>
+    public string? ResultsShareToken { get; set; }
+
+    /// <summary>
+    /// هل مشاركة النتائج مفعّلة؟
+    /// </summary>
+    public bool IsResultsShared { get; set; } = false;
+
+    /// <summary>
+    /// قائمة الإيميلات المسموح لها بعرض النتائج (JSON Array)
+    /// </summary>
+    public string? ResultsSharedEmailsJson { get; set; }
+
+    /// <summary>
+    /// صلاحيات المستلم (JSON: {"allowExport":false,"allowDraw":false})
+    /// </summary>
+    public string? ResultsSharePermissionsJson { get; set; }
+
     // إحصائيات
     public int ViewCount { get; set; } = 0;
     public int ResponseCount { get; set; } = 0;

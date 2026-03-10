@@ -41,6 +41,13 @@ public class EventDto
     public bool IsPrivate { get; set; }
     public List<string>? AllowedEmails { get; set; }
 
+    // إعدادات المسابقة
+    public string? CompetitionMode { get; set; }
+    public int WinnersCount { get; set; }
+    public int? QualifyingScore { get; set; }
+    public bool DrawCompleted { get; set; }
+    public string? WinnersJson { get; set; }
+
     // إعدادات توقيع الوثائق (Document Signing)
     public string? DocumentUrl { get; set; }
     public string? DocumentFileName { get; set; }
@@ -51,6 +58,12 @@ public class EventDto
     /// نوع التوقيع: single = موقّع واحد، multi = أكثر من موقّع
     /// </summary>
     public string SigningMode { get; set; } = "single";
+
+    // مشاركة النتائج
+    public string? ResultsShareToken { get; set; }
+    public bool IsResultsShared { get; set; }
+    public List<string>? ResultsSharedEmails { get; set; }
+    public ResultsSharePermissionsDto? ResultsSharePermissions { get; set; }
 
     public int ViewCount { get; set; }
     public int ResponseCount { get; set; }

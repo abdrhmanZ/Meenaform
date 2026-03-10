@@ -22,6 +22,7 @@ import {
   Trash2,
   MoreVertical,
   PenTool,
+  Trophy,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -66,6 +67,11 @@ const eventTypeConfig: Record<string, { label: string; icon: any; color: string 
     label: "توقيع وثيقة",
     icon: PenTool,
     color: "text-teal-600",
+  },
+  competition: {
+    label: "مسابقة وسحب",
+    icon: Trophy,
+    color: "text-amber-600",
   },
 };
 

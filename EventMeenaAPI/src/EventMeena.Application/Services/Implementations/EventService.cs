@@ -179,7 +179,11 @@ public class EventService : IEventService
                 IsPrivate = request.IsPrivate,
                 AllowedEmailsJson = request.AllowedEmails != null && request.AllowedEmails.Count > 0
                     ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
-                    : null
+                    : null,
+                // إعدادات المسابقة
+                CompetitionMode = request.CompetitionMode,
+                WinnersCount = request.WinnersCount,
+                QualifyingScore = request.QualifyingScore
             };
 
             // إنشاء الأقسام والمكونات باستخدام Navigation Properties
@@ -608,5 +612,252 @@ public class EventService : IEventService
             return current > 0 ? 100 : 0;
         return ((double)(current - previous) / previous) * 100;
     }
+
+    public async Task<ApiResponse<DrawResultDto>> DrawWinnersAsync(Guid eventId, Guid userId, int winnersCount, List<string>? winnerResponseIds = null)
+    {
+        var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
+        if (evt == null || evt.UserId != userId)
+            return ApiResponse<DrawResultDto>.FailureResponse("الحدث غير موجود");
+
+        if (evt.Type != EventType.Competition)
+            return ApiResponse<DrawResultDto>.FailureResponse("هذا الحدث ليس مسابقة");
+
+        if (evt.DrawCompleted)
+            return ApiResponse<DrawResultDto>.FailureResponse("تم إجراء السحب مسبقاً");
+
+        // جلب جميع الردود المكتملة
+        var responses = await _unitOfWork.Responses.GetByEventIdAsync(eventId);
+        var completedResponses = responses
+            .Where(r => r.Status == Domain.Enums.ResponseStatus.Completed)
+            .ToList();
+
+        List<Domain.Entities.Response> winners;
+
+        if (winnerResponseIds != null && winnerResponseIds.Count > 0)
+        {
+            // === الفائزون مختارون من العجلة في Frontend ===
+            // نحفظ IDs الفائزين المرسلة مباشرة
+            var winnerGuids = winnerResponseIds
+                .Select(id => Guid.TryParse(id, out var g) ? g : Guid.Empty)
+                .Where(g => g != Guid.Empty)
+                .ToList();
+
+            winners = completedResponses
+                .Where(r => winnerGuids.Contains(r.Id))
+                .ToList();
+
+            if (winners.Count == 0)
+                return ApiResponse<DrawResultDto>.FailureResponse("لم يتم العثور على الفائزين المحددين");
+        }
+        else
+        {
+            // === اختيار عشوائي (السلوك القديم) ===
+            var eligibleResponses = completedResponses;
+            if (evt.CompetitionMode == "quiz_draw" && evt.QualifyingScore.HasValue)
+            {
+                eligibleResponses = completedResponses.Where(r =>
+                {
+                    if (r.Percentage.HasValue)
+                        return r.Percentage.Value >= evt.QualifyingScore.Value;
+
+                    if (r.TotalPoints.HasValue && r.TotalPoints > 0 && r.Score.HasValue)
+                    {
+                        double percentage = ((double)r.Score.Value / r.TotalPoints.Value) * 100;
+                        return percentage >= evt.QualifyingScore.Value;
+                    }
+                    return false;
+                }).ToList();
+            }
+
+            if (eligibleResponses.Count == 0)
+                return ApiResponse<DrawResultDto>.FailureResponse("لا يوجد مشاركون مؤهلون للسحب");
+
+            var actualWinnersCount = Math.Min(winnersCount, eligibleResponses.Count);
+            var shuffled = eligibleResponses.OrderBy(_ => Guid.NewGuid()).ToList();
+            winners = shuffled.Take(actualWinnersCount).ToList();
+        }
+
+        // بناء قائمة الفائزين
+        var winnerDtos = winners.Select((w, index) =>
+        {
+            string participantName = !string.IsNullOrEmpty(w.RespondentName)
+                ? w.RespondentName
+                : "مشارك";
+            string? participantEmail = w.RespondentEmail;
+
+            double? score = null;
+            if (w.Percentage.HasValue)
+                score = Math.Round(w.Percentage.Value, 1);
+            else if (w.TotalPoints.HasValue && w.TotalPoints > 0 && w.Score.HasValue)
+                score = Math.Round(((double)w.Score.Value / w.TotalPoints.Value) * 100, 1);
+
+            return new DrawWinnerDto
+            {
+                ResponseId = w.Id.ToString(),
+                ParticipantName = participantName,
+                ParticipantEmail = participantEmail,
+                Rank = index + 1,
+                Score = score
+            };
+        }).ToList();
+
+        // حفظ الفائزين في قاعدة البيانات
+        evt.WinnersJson = System.Text.Json.JsonSerializer.Serialize(
+            winners.Select(w => w.Id.ToString()).ToList()
+        );
+        evt.DrawCompleted = true;
+        evt.WinnersCount = winners.Count;
+        _unitOfWork.Events.Update(evt);
+        await _unitOfWork.SaveChangesAsync();
+
+        // حساب المؤهلين للعرض
+        var qualifiedCount = completedResponses.Count;
+        if (evt.CompetitionMode == "quiz_draw" && evt.QualifyingScore.HasValue)
+        {
+            qualifiedCount = completedResponses.Count(r =>
+                (r.Percentage.HasValue && r.Percentage.Value >= evt.QualifyingScore.Value) ||
+                (r.TotalPoints.HasValue && r.TotalPoints > 0 && r.Score.HasValue &&
+                 ((double)r.Score.Value / r.TotalPoints.Value) * 100 >= evt.QualifyingScore.Value)
+            );
+            // fallback: لو لم يكن Backend يحسب الدرجات، نستخدم عدد الفائزين كحد أدنى
+            if (qualifiedCount == 0 && winnerResponseIds != null)
+                qualifiedCount = winners.Count;
+        }
+
+        var result = new DrawResultDto
+        {
+            Winners = winnerDtos,
+            TotalParticipants = completedResponses.Count,
+            QualifiedCount = qualifiedCount
+        };
+
+        return ApiResponse<DrawResultDto>.SuccessResponse(result, "تم إجراء السحب العشوائي بنجاح");
+    }
+
+    public async Task<ApiResponse<string>> UpdateResultsSharingAsync(Guid eventId, Guid userId, ShareResultsRequest request)
+    {
+        var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
+        if (evt == null || evt.UserId != userId)
+            return ApiResponse<string>.FailureResponse("الحدث غير موجود");
+
+        evt.IsResultsShared = request.IsEnabled;
+
+        // توليد token لو أول مرة
+        if (request.IsEnabled && string.IsNullOrEmpty(evt.ResultsShareToken))
+        {
+            evt.ResultsShareToken = Guid.NewGuid().ToString("N");
+        }
+
+        // حفظ الإيميلات
+        evt.ResultsSharedEmailsJson = request.AllowedEmails.Count > 0
+            ? System.Text.Json.JsonSerializer.Serialize(request.AllowedEmails)
+            : null;
+
+        // حفظ الصلاحيات
+        evt.ResultsSharePermissionsJson = System.Text.Json.JsonSerializer.Serialize(request.Permissions);
+
+        // يجب استدعاء Update لأن NoTracking مفعّل في DbContext
+        _unitOfWork.Events.Update(evt);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<string>.SuccessResponse(evt.ResultsShareToken ?? "", "تم تحديث إعدادات المشاركة");
+    }
+
+    public async Task<ApiResponse<SharedResultsDataDto>> AccessSharedResultsAsync(string token, string email)
+    {
+        // البحث عن الحدث بالـ token
+        var events = await _unitOfWork.Events.FindAsync(e => e.ResultsShareToken == token);
+        var evt = events.FirstOrDefault();
+
+        if (evt == null)
+            return ApiResponse<SharedResultsDataDto>.FailureResponse("الرابط غير صالح أو منتهي الصلاحية");
+
+        if (!evt.IsResultsShared)
+            return ApiResponse<SharedResultsDataDto>.FailureResponse("مشاركة النتائج غير مفعّلة لهذا الحدث");
+
+        // التحقق من الإيميل
+        var allowedEmails = new List<string>();
+        if (!string.IsNullOrEmpty(evt.ResultsSharedEmailsJson))
+        {
+            try
+            {
+                allowedEmails = System.Text.Json.JsonSerializer.Deserialize<List<string>>(evt.ResultsSharedEmailsJson) ?? new();
+            }
+            catch { }
+        }
+
+        var emailLower = email.Trim().ToLowerInvariant();
+        if (!allowedEmails.Any(e => e.Trim().ToLowerInvariant() == emailLower))
+            return ApiResponse<SharedResultsDataDto>.FailureResponse("ليس لديك صلاحية لعرض نتائج هذا الحدث");
+
+        // جلب الحدث مع التفاصيل الكاملة
+        var fullEvent = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(evt.Id);
+        if (fullEvent == null)
+            return ApiResponse<SharedResultsDataDto>.FailureResponse("فشل تحميل بيانات الحدث");
+
+        var eventDto = _mapper.Map<EventWithFullDetailsDto>(fullEvent);
+
+        // جلب الردود المكتملة
+        var responses = await _unitOfWork.Responses.FindAsync(r =>
+            r.EventId == evt.Id && r.Status == Domain.Enums.ResponseStatus.Completed);
+
+        // قائمة الفائزين
+        var winnerIds = new List<string>();
+        if (!string.IsNullOrEmpty(evt.WinnersJson))
+        {
+            try
+            {
+                winnerIds = System.Text.Json.JsonSerializer.Deserialize<List<string>>(evt.WinnersJson) ?? new();
+            }
+            catch { }
+        }
+
+        // تحويل الردود
+        var sharedResponses = responses.Select(r => new SharedResponseDto
+        {
+            Id = r.Id.ToString(),
+            ParticipantName = r.RespondentName ?? "مشارك مجهول",
+            ParticipantEmail = r.RespondentEmail,
+            Status = r.Status.ToString().ToLower(),
+            TimeSpent = r.DurationSeconds ?? 0,
+            StartedAt = r.StartedAt,
+            CompletedAt = r.CompletedAt,
+            IsWinner = winnerIds.Contains(r.Id.ToString()),
+            Score = r.Score.HasValue && r.TotalPoints.HasValue ? new SharedScoreDto
+            {
+                EarnedPoints = r.Score.Value,
+                TotalPoints = r.TotalPoints.Value,
+                Percentage = r.TotalPoints.Value > 0 ? Math.Round((double)r.Score.Value / r.TotalPoints.Value * 100, 1) : 0,
+                Passed = r.TotalPoints.Value > 0 && (double)r.Score.Value / r.TotalPoints.Value * 100 >= (evt.PassingScore ?? 0)
+            } : null,
+            // إرسال AnswersJson خام — الـ Frontend يحوّلها بنفس طريقة mapResponse
+            AnswersJson = r.AnswersJson ?? "{}"
+        }).ToList();
+
+        // الصلاحيات
+        var permissions = new ResultsSharePermissionsDto();
+        if (!string.IsNullOrEmpty(evt.ResultsSharePermissionsJson))
+        {
+            try
+            {
+                permissions = System.Text.Json.JsonSerializer.Deserialize<ResultsSharePermissionsDto>(
+                    evt.ResultsSharePermissionsJson,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                ) ?? new();
+            }
+            catch { }
+        }
+
+        var result = new SharedResultsDataDto
+        {
+            Event = eventDto,
+            Responses = sharedResponses,
+            Permissions = permissions
+        };
+
+        return ApiResponse<SharedResultsDataDto>.SuccessResponse(result);
+    }
+
 }
+
 
