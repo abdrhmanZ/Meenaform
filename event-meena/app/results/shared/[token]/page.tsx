@@ -19,7 +19,7 @@ import {
     Search,
     AlertCircle,
     BarChart3,
-    Download,
+
     User,
     Calendar,
     XCircle,
@@ -80,9 +80,7 @@ export default function SharedResultsPage() {
     const [responses, setResponses] = useState<EventResponse[]>([]);
     const [winnerIds, setWinnerIds] = useState<string[]>([]);
     const [permissions, setPermissions] = useState({ allowExport: false, allowDraw: false });
-
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isExporting, setIsExporting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Participant details state
     const [selectedResponse, setSelectedResponse] = useState<EventResponse | null>(null);
@@ -204,32 +202,7 @@ export default function SharedResultsPage() {
         setPhase("results");
     };
 
-    const exportCSV = () => {
-        if (!event) return;
-        setIsExporting(true);
-        try {
-            const headers = ["الاسم", "البريد", "الحالة", "الوقت (ث)", "الدرجة", "النسبة", "فائز"];
-            const rows = responses.map((r) => [
-                r.participant.name || "",
-                r.participant.email || "",
-                r.status === "completed" ? "مكتمل" : "غير مكتمل",
-                r.timeSpent.toString(),
-                r.score ? `${r.score.earnedPoints}/${r.score.totalPoints}` : "",
-                r.score ? `${r.score.percentage}%` : "",
-                winnerIds.includes(r.id) ? "نعم" : "لا",
-            ]);
-            const csvContent = "\uFEFF" + [headers, ...rows].map((r) => r.join(",")).join("\n");
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `results-${event.title}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
-        } finally {
-            setIsExporting(false);
-        }
-    };
+
 
     // ======== شاشة إدخال الإيميل ========
     if (phase === "email" || phase === "error") {
@@ -506,12 +479,7 @@ export default function SharedResultsPage() {
                             <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{event.title}</p>
                         </div>
 
-                        {permissions.allowExport && (
-                            <Button variant="outline" size="sm" onClick={exportCSV} disabled={isExporting} className="shrink-0 gap-2">
-                                <Download className="w-4 h-4" />
-                                تصدير النتائج (CSV)
-                            </Button>
-                        )}
+
                     </div>
                 </div>
             </div>

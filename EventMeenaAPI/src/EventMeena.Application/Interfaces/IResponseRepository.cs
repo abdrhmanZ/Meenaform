@@ -61,5 +61,10 @@ public interface IResponseRepository : IGenericRepository<Response>
     /// الحصول على عدد الردود المكتملة لمجموعة أحداث دفعة واحدة
     /// </summary>
     Task<Dictionary<Guid, int>> GetBulkCompletedCountsAsync(IEnumerable<Guid> eventIds);
+
+    /// <summary>
+    /// جلب الردود المكتملة لحدث (خفيف — بدون AnswersJson) للسحب العشوائي
+    /// </summary>
+    Task<IReadOnlyList<Response>> GetCompletedForDrawAsync(Guid eventId);
 }
 

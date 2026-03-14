@@ -263,8 +263,16 @@ public class DocumentSigningService : IDocumentSigningService
     public async Task<ApiResponse<EventWithSignatureFieldsDto>> GetDocumentEventAsync(Guid eventId, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventWithSignatureFieldsDto>.FailureResponse("الحدث غير موجود");
+
+        // السماح للمالك والمتعاونين بالوصول
+        if (evt.UserId != userId)
+        {
+            var isCollaborator = await _unitOfWork.EventCollaborators.IsCollaboratorAsync(eventId, userId);
+            if (!isCollaborator)
+                return ApiResponse<EventWithSignatureFieldsDto>.FailureResponse("الحدث غير موجود");
+        }
 
         var signatureFields = await _unitOfWork.SignatureFields.GetByEventIdAsync(eventId);
 
@@ -523,8 +531,16 @@ public class DocumentSigningService : IDocumentSigningService
     public async Task<ApiResponse<List<DocumentSignatureDto>>> GetEventSignaturesAsync(Guid eventId, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<List<DocumentSignatureDto>>.FailureResponse("الحدث غير موجود");
+
+        // السماح للمالك والمتعاونين بالوصول
+        if (evt.UserId != userId)
+        {
+            var isCollaborator = await _unitOfWork.EventCollaborators.IsCollaboratorAsync(eventId, userId);
+            if (!isCollaborator)
+                return ApiResponse<List<DocumentSignatureDto>>.FailureResponse("الحدث غير موجود");
+        }
 
         var signatures = await _unitOfWork.DocumentSignatures.GetByEventIdWithFieldInfoAsync(eventId);
         return ApiResponse<List<DocumentSignatureDto>>.SuccessResponse(

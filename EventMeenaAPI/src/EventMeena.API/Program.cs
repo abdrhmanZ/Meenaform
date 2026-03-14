@@ -210,6 +210,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISendEventService, SendEventService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IDocumentSigningService, DocumentSigningService>();
+builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
 
 // ===========================================
 // 8. JWT Authentication Configuration

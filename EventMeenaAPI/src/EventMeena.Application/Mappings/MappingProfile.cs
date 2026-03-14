@@ -41,6 +41,16 @@ public class MappingProfile : Profile
                 src.SignatureFields != null ? src.SignatureFields.Count : 0))
             .ForMember(dest => dest.SignaturesCount, opt => opt.MapFrom(src =>
                 src.SignatureFields != null ? src.SignatureFields.Sum(sf => sf.Signatures != null ? sf.Signatures.Count : 0) : 0));
+        CreateMap<Event, SharedEventListItemDto>()
+            .ForMember(dest => dest.SectionsCount, opt => opt.MapFrom(src => src.Sections.Count))
+            .ForMember(dest => dest.ComponentsCount, opt => opt.MapFrom(src =>
+                src.Sections.Sum(s => s.Components.Count)))
+            .ForMember(dest => dest.CompletedResponseCount, opt => opt.MapFrom(src =>
+                src.Responses.Count(r => r.Status == Domain.Enums.ResponseStatus.Completed)))
+            .ForMember(dest => dest.SignatureFieldsCount, opt => opt.MapFrom(src =>
+                src.SignatureFields != null ? src.SignatureFields.Count : 0))
+            .ForMember(dest => dest.SignaturesCount, opt => opt.MapFrom(src =>
+                src.SignatureFields != null ? src.SignatureFields.Sum(sf => sf.Signatures != null ? sf.Signatures.Count : 0) : 0));
         CreateMap<Event, EventWithSectionsDto>()
             .ForMember(dest => dest.AllowedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.AllowedEmailsJson)))
             .ForMember(dest => dest.ResultsSharedEmails, opt => opt.MapFrom(src => ParseAllowedEmails(src.ResultsSharedEmailsJson)))

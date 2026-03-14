@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Trophy, ChevronRight, Loader2 } from "lucide-react";
+import { Trophy, ChevronRight, Loader2, PartyPopper, ArrowLeft } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface Participant {
@@ -330,28 +330,30 @@ export default function LuckyWheel({
                     setWinners(newWinners);
                     onWinnerSelected(winner);
 
-                    // إذا خلّصنا كل الفائزين
-                    if (newWinners.length >= winnersCount || remaining.length <= 1) {
-                        setTimeout(() => onDrawComplete(newWinners), 2000);
-                    } else {
-                        // تأخير قبل السماح بالسحب التالي
-                        setCanSpinAgain(false);
-                        setTimeout(() => {
-                            const newRemaining = remaining.filter((p) => p.id !== winner.id);
-                            setRemaining(newRemaining);
-                            setHighlightIndex(null);
-                            setShowWinner(false);
-                            setLastWinner(null);
-                            currentAngleRef.current = angle;
-                            setCanSpinAgain(true);
-                        }, 2500);
-                    }
+                    // ننتظر المستخدم يضغط زر للمتابعة — بدون انتقال تلقائي
+                    setCanSpinAgain(false);
                 }, 1500);
             }
         };
 
         animationRef.current = requestAnimationFrame(animate);
     }, [isSpinning, remaining, winners, winnersCount, canSpinAgain, drawWheel, onWinnerSelected, onDrawComplete, launchCelebration]);
+
+    // المستخدم يضغط "سحب الفائز التالي" — ينظف الفائز الحالي ويجهز العجلة
+    const proceedToNextDraw = useCallback(() => {
+        if (!lastWinner) return;
+        const newRemaining = remaining.filter((p) => p.id !== lastWinner.id);
+        setRemaining(newRemaining);
+        setHighlightIndex(null);
+        setShowWinner(false);
+        setLastWinner(null);
+        setCanSpinAgain(true);
+    }, [lastWinner, remaining]);
+
+    // المستخدم يضغط "عرض النتائج النهائية"
+    const proceedToResults = useCallback(() => {
+        onDrawComplete(winners);
+    }, [winners, onDrawComplete]);
 
     useEffect(() => {
         return () => {
@@ -379,15 +381,38 @@ export default function LuckyWheel({
 
             {/* شاشة الفائز */}
             {showWinner && lastWinner && (
-                <div className="animate-in zoom-in-75 duration-500 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl p-6 text-center shadow-xl w-full max-w-sm">
+                <div className="animate-in zoom-in-75 duration-500 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl p-5 text-center shadow-xl w-full max-w-sm">
                     <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
                         <Trophy className="w-7 h-7 text-amber-600" />
                     </div>
-                    <p className="text-sm text-amber-700 font-medium mb-1">الفائز {winners.length}</p>
+                    <p className="text-sm text-amber-700 font-medium mb-1">🎉 الفائز {winners.length}</p>
                     <h3 className="text-2xl font-bold text-gray-900">{lastWinner.name}</h3>
                     <div className="mt-3 inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
-                        <Trophy className="w-4 h-4" />
+                        <PartyPopper className="w-4 h-4" />
                         مبروك!
+                    </div>
+
+                    {/* زر التحكم اليدوي */}
+                    <div className="mt-4">
+                        {winners.length >= winnersCount || remaining.length <= 1 ? (
+                            <Button
+                                size="lg"
+                                onClick={proceedToResults}
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-300/40 py-3 text-base font-bold rounded-xl"
+                            >
+                                <Trophy className="w-5 h-5 ml-1" />
+                                عرض النتائج النهائية
+                            </Button>
+                        ) : (
+                            <Button
+                                size="lg"
+                                onClick={proceedToNextDraw}
+                                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-300/40 py-3 text-base font-bold rounded-xl"
+                            >
+                                <ArrowLeft className="w-5 h-5 ml-1" />
+                                سحب الفائز التالي ({winners.length + 1} من {winnersCount})
+                            </Button>
+                        )}
                     </div>
                 </div>
             )}
@@ -403,8 +428,8 @@ export default function LuckyWheel({
                 </div>
             )}
 
-            {/* زر السحب */}
-            {!isComplete && (
+            {/* زر السحب — يظهر فقط لما ما في فائز معروض ولسه ما خلّصنا */}
+            {!isComplete && !showWinner && (
                 <Button
                     size="lg"
                     onClick={spin}
@@ -415,11 +440,6 @@ export default function LuckyWheel({
                         <span className="flex items-center gap-2">
                             <Loader2 className="w-5 h-5 animate-spin" />
                             جاري السحب...
-                        </span>
-                    ) : !canSpinAgain ? (
-                        <span className="flex items-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            تحضير السحب التالي...
                         </span>
                     ) : winners.length === 0 ? (
                         <span className="flex items-center gap-2">

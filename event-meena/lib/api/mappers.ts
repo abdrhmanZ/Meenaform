@@ -12,7 +12,7 @@
 
 import { User } from "@/types/auth";
 import { Contact, ContactFormData, Group, GroupFormData } from "@/types/contact";
-import { Event, EventFormData, EventStatus, EventType, EventSettings, EventStats } from "@/types/event";
+import { Event, EventFormData, EventStatus, EventType, EventSettings, EventStats, Collaborator, CollaboratorRole, UserSearchResult, SharedEvent } from "@/types/event";
 
 // ============================================================
 // أنواع Backend DTOs (ما يأتي من الـ API)
@@ -1331,3 +1331,80 @@ const mapResponseStatusFromBackend = (status: number): "in_progress" | "complete
     default: return "in_progress";
   }
 };
+
+// ============================================================
+// Collaboration DTOs & Mappers
+// ============================================================
+
+/** متعاون من Backend */
+export interface BackendCollaboratorDto {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userProfileImage: string | null;
+  role: number;
+  roleName: string;
+  addedAt: string;
+}
+
+/** نتيجة بحث مستخدم من Backend */
+export interface BackendUserSearchResultDto {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage: string | null;
+}
+
+/** حدث مشترك من Backend */
+export interface BackendSharedEventListItemDto extends BackendEventListItemDto {
+  ownerName: string;
+  myRole: number;
+  myRoleName: string;
+}
+
+/**
+ * تحويل رقم الدور إلى نص
+ */
+const mapCollaboratorRole = (role: number): CollaboratorRole => {
+  const roles: Record<number, CollaboratorRole> = {
+    1: "viewer",
+    2: "editor",
+  };
+  return roles[role] || "viewer";
+};
+
+/**
+ * تحويل المتعاون من Backend إلى Frontend
+ */
+export const mapCollaborator = (backend: BackendCollaboratorDto): Collaborator => ({
+  id: backend.id,
+  userId: backend.userId,
+  userName: backend.userName,
+  userEmail: backend.userEmail,
+  userProfileImage: backend.userProfileImage || undefined,
+  role: mapCollaboratorRole(backend.role),
+  roleName: backend.roleName,
+  addedAt: backend.addedAt,
+});
+
+/**
+ * تحويل نتيجة البحث عن مستخدم
+ */
+export const mapUserSearchResult = (backend: BackendUserSearchResultDto): UserSearchResult => ({
+  id: backend.id,
+  fullName: backend.fullName,
+  email: backend.email,
+  profileImage: backend.profileImage || undefined,
+});
+
+/**
+ * تحويل حدث مشترك من Backend إلى Frontend
+ */
+export const mapSharedEventListItem = (backend: BackendSharedEventListItemDto): SharedEvent => ({
+  ...mapEventListItem(backend),
+  ownerName: backend.ownerName,
+  myRole: mapCollaboratorRole(backend.myRole),
+  myRoleName: backend.myRoleName,
+});
+

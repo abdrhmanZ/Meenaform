@@ -4,8 +4,9 @@
  */
 
 import { create } from "zustand";
-import { Event, EventFormData, EventsState, EventStatus, EventType } from "@/types/event";
+import { Event, EventFormData, EventsState, EventStatus, EventType, SharedEvent } from "@/types/event";
 import { eventsService } from "@/lib/api/services/eventsService";
+import { collaboratorService } from "@/lib/api/services/collaboratorService";
 import { ApiError } from "@/lib/api/client";
 
 // متغير خارجي لمنع الاستدعاءات المتكررة (deduplication)
@@ -13,8 +14,13 @@ let pendingFetchEvents: Promise<void> | null = null;
 // ✅ flag لتتبع هل جلبنا الأحداث قبل كده ولا لأ (يشتغل حتى لو 0 أحداث)
 let hasFetchedEvents = false;
 
+// deduplication للأحداث المشتركة
+let pendingFetchSharedEvents: Promise<void> | null = null;
+let hasFetchedSharedEvents = false;
+
 export const useEventsStore = create<EventsState>((set, get) => ({
   events: [],
+  sharedEvents: [],
   currentEvent: null,
   isLoading: false,
   error: null,
@@ -470,6 +476,32 @@ export const useEventsStore = create<EventsState>((set, get) => ({
     });
 
     return filtered;
+  },
+
+  // جلب الأحداث المشتركة مع المستخدم الحالي
+  fetchSharedEvents: async (force?: boolean) => {
+    if (hasFetchedSharedEvents && !force) {
+      return;
+    }
+
+    if (pendingFetchSharedEvents) {
+      await pendingFetchSharedEvents;
+      return;
+    }
+
+    pendingFetchSharedEvents = (async () => {
+      try {
+        const sharedEvents = await collaboratorService.getSharedWithMe();
+        hasFetchedSharedEvents = true;
+        set({ sharedEvents });
+      } catch (error) {
+        console.error("فشل جلب الأحداث المشتركة:", error);
+      } finally {
+        pendingFetchSharedEvents = null;
+      }
+    })();
+
+    await pendingFetchSharedEvents;
   },
 }));
 

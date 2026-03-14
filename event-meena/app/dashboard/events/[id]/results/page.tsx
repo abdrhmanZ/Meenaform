@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
+import { SharedEvent, CollaboratorRole } from "@/types/event";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/dashboard/LoadingState";
 import { Response } from "@/types/response";
@@ -48,7 +49,7 @@ function ResultsPageContent() {
   const router = useRouter();
   const eventId = params.id as string;
 
-  const { currentEvent, fetchEventById, fetchEvents, events } = useEventsStore();
+  const { currentEvent, fetchEventById, fetchEvents, events, sharedEvents, fetchSharedEvents } = useEventsStore();
   const [responses, setResponses] = useState<Response[]>([]);
   const [filteredResponses, setFilteredResponses] = useState<Response[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,6 +72,15 @@ function ResultsPageContent() {
     [events, eventId]
   );
   const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
+
+  // التحقق من أن الحدث مشترك
+  const sharedEvent = useMemo(
+    () => sharedEvents.find((e) => e.id === eventId) as SharedEvent | undefined,
+    [sharedEvents, eventId]
+  );
+  const isShared = !!sharedEvent;
+  const myRole = sharedEvent?.myRole;
+  const canEdit = !isShared || myRole === "editor";
 
   // ✅ تحميل الحدث والردود بالتوازي — يفضل يحاول لحد ما يجيبها
   const loadEventData = async (retryCount = 0) => {
@@ -97,6 +107,7 @@ function ResultsPageContent() {
     if (eventId && !hasFetched.current) {
       hasFetched.current = true;
       loadEventData();
+      fetchSharedEvents();
     }
   }, [eventId, fetchEventById]);
 
@@ -224,8 +235,8 @@ function ResultsPageContent() {
 
             {/* أزرار الإجراءات */}
             <div className="flex items-center gap-2 flex-wrap">
-              {/* أزرار التصدير */}
-              {displayEvent.type !== "document_signing" && displayEvent.type !== "competition" && (
+              {/* أزرار التصدير — مخفية عن المشاهدين */}
+              {canEdit && displayEvent.type !== "document_signing" && displayEvent.type !== "competition" && (
                 <>
                   <Button
                     variant="outline"
@@ -246,8 +257,8 @@ function ResultsPageContent() {
                 </>
               )}
 
-              {/* زر مشاركة النتائج - Not for document_signing */}
-              {displayEvent.type !== "document_signing" && (
+              {/* زر مشاركة النتائج — مخفي عن المشاهدين */}
+              {canEdit && displayEvent.type !== "document_signing" && (
                 <Button
                   variant="outline"
                   size="sm"

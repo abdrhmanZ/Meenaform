@@ -21,12 +21,14 @@ function EventsPageContent() {
   const { toast } = useToast();
   const {
     fetchEvents,
+    fetchSharedEvents,
     getFilteredEvents,
     deleteEvent,
     duplicateEvent,
     archiveEvent,
     isLoading,
     events,
+    sharedEvents,
   } = useEventsStore();
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
@@ -35,9 +37,12 @@ function EventsPageContent() {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    fetchSharedEvents();
+  }, [fetchEvents, fetchSharedEvents]);
 
   const filteredEvents = getFilteredEvents();
+  // دمج الأحداث المشتركة مع الأحداث المفلترة
+  const allFilteredEvents = [...filteredEvents, ...sharedEvents];
 
   const handleDeleteClick = (id: string) => {
     setEventToDelete(id);
@@ -92,7 +97,7 @@ function EventsPageContent() {
   };
 
   // ✅ نعرض loading بس لو مافيش بيانات مخزنة — لو فيه cache نعرض الأحداث فوراً
-  if (isLoading && events.length === 0) {
+  if (isLoading && events.length === 0 && sharedEvents.length === 0) {
     return (
       <DashboardLayout>
         <EventsPageHeader />
@@ -114,7 +119,7 @@ function EventsPageContent() {
 
       {/* المحتوى */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {filteredEvents.length === 0 && events.length === 0 ? (
+        {allFilteredEvents.length === 0 && events.length === 0 && sharedEvents.length === 0 ? (
           /* Empty State - لا توجد أحداث */
           <EmptyState
             icon={Calendar}
@@ -123,7 +128,7 @@ function EventsPageContent() {
             actionLabel="إنشاء حدث جديد"
             onAction={() => router.push("/dashboard/events/new")}
           />
-        ) : filteredEvents.length === 0 ? (
+        ) : allFilteredEvents.length === 0 ? (
           /* Empty State - لا توجد نتائج للفلاتر */
           <EmptyState
             icon={Calendar}
@@ -136,7 +141,7 @@ function EventsPageContent() {
             <div className="flex items-center justify-between mb-6">
               <p className="text-sm text-gray-600">
                 <span className="font-semibold text-gray-900">
-                  {filteredEvents.length}
+                  {allFilteredEvents.length}
                 </span>{" "}
                 حدث
               </p>
@@ -146,14 +151,14 @@ function EventsPageContent() {
             {/* عرض الأحداث */}
             {viewMode === "grid" ? (
               <EventsGrid
-                events={filteredEvents}
+                events={allFilteredEvents}
                 onDelete={handleDeleteClick}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
               />
             ) : (
               <EventsTable
-                events={filteredEvents}
+                events={allFilteredEvents}
                 onDelete={handleDeleteClick}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
@@ -169,7 +174,7 @@ function EventsPageContent() {
         onOpenChange={setDeleteDialogOpen}
         onConfirm={confirmDelete}
         eventTitle={
-          events.find((e) => e.id === eventToDelete)?.title || ""
+          [...events, ...sharedEvents].find((e) => e.id === eventToDelete)?.title || ""
         }
       />
     </DashboardLayout>

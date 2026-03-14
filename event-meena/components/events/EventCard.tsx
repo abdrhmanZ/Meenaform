@@ -1,6 +1,6 @@
 "use client";
 
-import { Event } from "@/types/event";
+import { Event, SharedEvent, CollaboratorRole } from "@/types/event";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import EventStatusBadge from "./EventStatusBadge";
@@ -36,7 +36,7 @@ import {
 import { parseBackendDate } from "@/lib/utils";
 
 interface EventCardProps {
-  event: Event;
+  event: Event | SharedEvent;
   onDelete?: (id: string) => void;
   onDuplicate?: (id: string) => void;
   onArchive?: (id: string) => void;
@@ -88,6 +88,19 @@ export default function EventCard({ event, onDelete, onDuplicate, onArchive }: E
   const isDocumentSigning = event.type === "document_signing";
   const isCompetition = event.type === "competition";
 
+  // التحقق من أن الحدث مشترك
+  const isShared = "myRole" in event;
+  const myRole: CollaboratorRole | undefined = isShared ? (event as SharedEvent).myRole : undefined;
+  const ownerName = isShared ? (event as SharedEvent).ownerName : undefined;
+  const canEdit = !isShared || myRole === "editor";
+  const canDelete = !isShared; // المالك فقط
+  const canDuplicate = !isShared; // المالك فقط
+
+  const roleLabels: Record<CollaboratorRole, { label: string; color: string; bg: string }> = {
+    viewer: { label: "مشاهد", color: "text-blue-600", bg: "bg-blue-50" },
+    editor: { label: "محرر", color: "text-amber-600", bg: "bg-amber-50" },
+  };
+
   const sectionsCount = event.sectionsCount ?? event.sections?.length ?? 0;
   const componentsCount = event.componentsCount ??
     event.sections?.reduce((total, section) => total + (section.components?.length || 0), 0) ?? 0;
@@ -133,35 +146,60 @@ export default function EventCard({ event, onDelete, onDuplicate, onArchive }: E
                 عرض التفاصيل
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/events/${event.id}/edit`}>
-                <Edit className="w-4 h-4 ml-2" />
-                تعديل
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDuplicate?.(event.id)}>
-              <Copy className="w-4 h-4 ml-2" />
-              نسخ
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete?.(event.id)}
-              className="text-red-600"
-            >
-              <Trash2 className="w-4 h-4 ml-2" />
-              حذف
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/events/${event.id}/edit`}>
+                  <Edit className="w-4 h-4 ml-2" />
+                  تعديل
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {canDuplicate && (
+              <DropdownMenuItem onClick={() => onDuplicate?.(event.id)}>
+                <Copy className="w-4 h-4 ml-2" />
+                نسخ
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete?.(event.id)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 ml-2" />
+                  حذف
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       {/* الشارات */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <EventStatusBadge status={event.status} />
         <span className={`text-xs px-2 py-1 rounded-full ${typeConfig.bgColor} ${typeConfig.color}`}>
           {typeConfig.label}
         </span>
+        {isShared && myRole && (
+          <span className={`text-xs px-2 py-1 rounded-full ${roleLabels[myRole].bg} ${roleLabels[myRole].color} font-medium`}>
+            {roleLabels[myRole].label}
+          </span>
+        )}
       </div>
+
+      {/* معلومات المشاركة */}
+      {isShared && ownerName && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
+          <Users className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          <span className="text-xs text-indigo-700">
+            <span className="font-medium">{ownerName}</span>
+            <span className="text-indigo-400 mx-1">-</span>
+            شارك معك هذا الحدث
+          </span>
+        </div>
+      )}
 
       {/* الإحصائيات - مختلفة حسب نوع الحدث */}
       {isDocumentSigning ? (
@@ -277,12 +315,14 @@ export default function EventCard({ event, onDelete, onDuplicate, onArchive }: E
             عرض
           </Link>
         </Button>
-        <Button asChild size="sm" className="flex-1 bg-primary hover:bg-primary/90">
-          <Link href={`/dashboard/events/${event.id}/edit`}>
-            <Edit className="w-4 h-4 ml-2" />
-            تعديل
-          </Link>
-        </Button>
+        {canEdit && (
+          <Button asChild size="sm" className="flex-1 bg-primary hover:bg-primary/90">
+            <Link href={`/dashboard/events/${event.id}/edit`}>
+              <Edit className="w-4 h-4 ml-2" />
+              تعديل
+            </Link>
+          </Button>
+        )}
       </div>
     </Card>
   );

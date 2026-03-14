@@ -63,6 +63,10 @@ public class UnitOfWork : IUnitOfWork
     public IDocumentSignatureRepository DocumentSignatures =>
         _documentSignatures ??= new DocumentSignatureRepository(_context);
 
+    private IEventCollaboratorRepository? _eventCollaborators;
+    public IEventCollaboratorRepository EventCollaborators =>
+        _eventCollaborators ??= new EventCollaboratorRepository(_context);
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.SaveChangesAsync(cancellationToken);

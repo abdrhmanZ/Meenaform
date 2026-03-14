@@ -1,6 +1,6 @@
 "use client";
 
-import { Event } from "@/types/event";
+import { Event, CollaboratorRole } from "@/types/event";
 import { Button } from "@/components/ui/button";
 import EventStatusBadge from "./EventStatusBadge";
 import {
@@ -16,6 +16,7 @@ import {
   Send,
   FileText,
   PenTool,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -35,6 +36,9 @@ interface EventDetailsHeaderProps {
   onSaveAsTemplate?: () => void;
   onPublish?: () => void;
   onUnpublish?: () => void;
+  onManageCollaborators?: () => void;
+  isShared?: boolean;
+  myRole?: CollaboratorRole;
 }
 
 const eventTypeConfig: Record<string, { label: string; color: string; bgColor: string }> = {
@@ -78,8 +82,15 @@ export default function EventDetailsHeader({
   onSaveAsTemplate,
   onPublish,
   onUnpublish,
+  onManageCollaborators,
+  isShared = false,
+  myRole,
 }: EventDetailsHeaderProps) {
   const typeConfig = eventTypeConfig[event.type];
+
+  // صلاحيات المتعاون
+  const canEdit = !isShared || myRole === "editor";
+  const isOwner = !isShared;
 
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 border-b border-gray-200">
@@ -129,8 +140,8 @@ export default function EventDetailsHeader({
 
           {/* Right Side - Actions */}
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            {/* Publish Button - Only for draft events */}
-            {event.status === "draft" && onPublish && (
+            {/* Publish Button - Only for draft events, editors+ */}
+            {event.status === "draft" && onPublish && canEdit && (
               <Button
                 onClick={onPublish}
                 size="lg"
@@ -142,8 +153,8 @@ export default function EventDetailsHeader({
               </Button>
             )}
 
-            {/* Unpublish Button - Only for active events */}
-            {event.status === "active" && onUnpublish && (
+            {/* Unpublish Button - Only for active events, editors+ */}
+            {event.status === "active" && onUnpublish && canEdit && (
               <Button
                 onClick={onUnpublish}
                 variant="outline"
@@ -184,8 +195,8 @@ export default function EventDetailsHeader({
               </Button>
             )}
 
-            {/* Edit - Not for competition */}
-            {event.type !== "competition" && (
+            {/* Edit - Not for competition, editors+ */}
+            {event.type !== "competition" && canEdit && (
               <Button
                 asChild
                 size="lg"
@@ -198,16 +209,18 @@ export default function EventDetailsHeader({
               </Button>
             )}
 
-            {/* Share - Hidden on mobile, shown in dropdown */}
-            <Button
-              onClick={onShare}
-              variant="outline"
-              size="lg"
-              className="hidden md:inline-flex hover:bg-green-50 hover:border-green-500 hover:text-green-600"
-            >
-              <Share2 className="w-5 h-5 ml-2" />
-              مشاركة
-            </Button>
+            {/* Share - Hidden on mobile, shown in dropdown, not for viewers */}
+            {canEdit && (
+              <Button
+                onClick={onShare}
+                variant="outline"
+                size="lg"
+                className="hidden md:inline-flex hover:bg-green-50 hover:border-green-500 hover:text-green-600"
+              >
+                <Share2 className="w-5 h-5 ml-2" />
+                مشاركة
+              </Button>
+            )}
 
             {/* More Actions */}
             <DropdownMenu>
@@ -232,13 +245,15 @@ export default function EventDetailsHeader({
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={onShare} className="md:hidden">
-                  <Share2 className="w-4 h-4 ml-2" />
-                  مشاركة
-                </DropdownMenuItem>
+                {canEdit && (
+                  <DropdownMenuItem onClick={onShare} className="md:hidden">
+                    <Share2 className="w-4 h-4 ml-2" />
+                    مشاركة
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="md:hidden" />
-                {/* Always visible items - Not for document_signing or competition */}
-                {event.type !== "document_signing" && event.type !== "competition" && (
+                {/* Always visible items - Not for document_signing or competition, owner only */}
+                {isOwner && event.type !== "document_signing" && event.type !== "competition" && (
                   <>
                     <DropdownMenuItem onClick={onSaveAsTemplate}>
                       <BookmarkPlus className="w-4 h-4 ml-2" />
@@ -251,13 +266,24 @@ export default function EventDetailsHeader({
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={onDelete}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4 ml-2" />
-                  حذف
-                </DropdownMenuItem>
+                {isOwner && onManageCollaborators && (
+                  <DropdownMenuItem onClick={onManageCollaborators}>
+                    <Users className="w-4 h-4 ml-2" />
+                    إدارة المتعاونين
+                  </DropdownMenuItem>
+                )}
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={onDelete}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4 ml-2" />
+                      حذف
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

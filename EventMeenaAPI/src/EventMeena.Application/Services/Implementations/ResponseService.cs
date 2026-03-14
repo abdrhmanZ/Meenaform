@@ -29,8 +29,16 @@ public class ResponseService : IResponseService
             return ApiResponse<ResponseDto>.FailureResponse("الاستجابة غير موجودة");
 
         var evt = await _unitOfWork.Events.GetByIdAsync(response.EventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<ResponseDto>.FailureResponse("غير مصرح");
+
+        // السماح للمالك والمتعاونين بالوصول
+        if (evt.UserId != userId)
+        {
+            var isCollaborator = await _unitOfWork.EventCollaborators.IsCollaboratorAsync(evt.Id, userId);
+            if (!isCollaborator)
+                return ApiResponse<ResponseDto>.FailureResponse("غير مصرح");
+        }
 
         return ApiResponse<ResponseDto>.SuccessResponse(_mapper.Map<ResponseDto>(response));
     }
@@ -38,8 +46,16 @@ public class ResponseService : IResponseService
     public async Task<ApiResponse<PagedResult<ResponseDto>>> GetByEventIdAsync(Guid eventId, Guid userId, PaginationParams pagination)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<PagedResult<ResponseDto>>.FailureResponse("الحدث غير موجود");
+
+        // السماح للمالك والمتعاونين بالوصول
+        if (evt.UserId != userId)
+        {
+            var isCollaborator = await _unitOfWork.EventCollaborators.IsCollaboratorAsync(eventId, userId);
+            if (!isCollaborator)
+                return ApiResponse<PagedResult<ResponseDto>>.FailureResponse("الحدث غير موجود");
+        }
 
         // Database-level pagination - يجلب فقط الصفحة المطلوبة من قاعدة البيانات
         var (responses, totalCount) = await _unitOfWork.Responses.GetByEventIdPagedAsync(eventId, pagination.PageNumber, pagination.PageSize);
@@ -56,8 +72,16 @@ public class ResponseService : IResponseService
     public async Task<ApiResponse<ResponseStatsDto>> GetEventStatsAsync(Guid eventId, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<ResponseStatsDto>.FailureResponse("الحدث غير موجود");
+
+        // السماح للمالك والمتعاونين بالوصول
+        if (evt.UserId != userId)
+        {
+            var isCollaborator = await _unitOfWork.EventCollaborators.IsCollaboratorAsync(eventId, userId);
+            if (!isCollaborator)
+                return ApiResponse<ResponseStatsDto>.FailureResponse("الحدث غير موجود");
+        }
 
         var stats = await _unitOfWork.Responses.GetEventStatsAsync(eventId);
         return ApiResponse<ResponseStatsDto>.SuccessResponse(stats);

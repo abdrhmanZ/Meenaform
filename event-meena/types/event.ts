@@ -198,6 +198,7 @@ export interface CreateEventFromScratchData {
  */
 export interface EventsState {
   events: Event[];
+  sharedEvents: SharedEvent[];
   currentEvent: Event | null;
   isLoading: boolean;
   error: string | null;
@@ -225,6 +226,9 @@ export interface EventsState {
   archiveEvent: (id: string) => Promise<void>;
   publishEvent: (id: string) => Promise<void>;
   updateEventStatus: (id: string, status: EventStatus) => Promise<void>;
+
+  // التعاون
+  fetchSharedEvents: (force?: boolean) => Promise<void>;
 
   // الفلاتر
   setSearch: (search: string) => void;
@@ -294,4 +298,46 @@ export const defaultEventSettings: EventSettings = {
   isPrivate: false,
   allowedEmails: [],
 };
+
+// ============================================================
+// أنواع التعاون (Collaboration Types)
+// ============================================================
+
+/**
+ * أدوار المتعاونين
+ */
+export type CollaboratorRole = "viewer" | "editor";
+
+/**
+ * متعاون في حدث
+ */
+export interface Collaborator {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userProfileImage?: string;
+  role: CollaboratorRole;
+  roleName: string;
+  addedAt: string;
+}
+
+/**
+ * نتيجة البحث عن مستخدم
+ */
+export interface UserSearchResult {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage?: string;
+}
+
+/**
+ * حدث مشترك مع المستخدم (يمتد من Event)
+ */
+export interface SharedEvent extends Event {
+  ownerName: string;
+  myRole: CollaboratorRole;
+  myRoleName: string;
+}
 

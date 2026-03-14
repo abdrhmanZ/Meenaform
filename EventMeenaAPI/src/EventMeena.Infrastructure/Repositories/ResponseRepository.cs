@@ -257,5 +257,27 @@ public class ResponseRepository : GenericRepository<Response>, IResponseReposito
 
         return counts.ToDictionary(c => c.EventId, c => c.Count);
     }
+
+    /// <summary>
+    /// جلب الردود المكتملة لحدث (خفيف — بدون AnswersJson) للسحب العشوائي
+    /// </summary>
+    public async Task<IReadOnlyList<Response>> GetCompletedForDrawAsync(Guid eventId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(r => r.EventId == eventId && r.Status == ResponseStatus.Completed)
+            .Select(r => new Response
+            {
+                Id = r.Id,
+                EventId = r.EventId,
+                Status = r.Status,
+                RespondentName = r.RespondentName,
+                RespondentEmail = r.RespondentEmail,
+                Score = r.Score,
+                TotalPoints = r.TotalPoints,
+                Percentage = r.Percentage,
+            })
+            .ToListAsync();
+    }
 }
 

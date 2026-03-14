@@ -25,7 +25,11 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventDto>> GetByIdAsync(Guid id, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
+            return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون (أي صلاحية)
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Viewer))
             return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
 
         return ApiResponse<EventDto>.SuccessResponse(_mapper.Map<EventDto>(evt));
@@ -34,7 +38,11 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventWithFullDetailsDto>> GetByIdWithFullDetailsAsync(Guid id, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
+            return ApiResponse<EventWithFullDetailsDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون (أي صلاحية)
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Viewer))
             return ApiResponse<EventWithFullDetailsDto>.FailureResponse("الحدث غير موجود");
 
         return ApiResponse<EventWithFullDetailsDto>.SuccessResponse(_mapper.Map<EventWithFullDetailsDto>(evt));
@@ -230,8 +238,12 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventDto>> UpdateAsync(Guid id, Guid userId, UpdateEventRequest request)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية محرر على الأقل
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Editor))
+            return ApiResponse<EventDto>.FailureResponse("غير مصرح لك بتعديل هذا الحدث");
 
         _mapper.Map(request, evt);
         _unitOfWork.Events.Update(evt);
@@ -247,8 +259,12 @@ public class EventService : IEventService
     {
         // جلب الحدث مع الأقسام والمكونات
         var evt = await _unitOfWork.Events.GetByIdWithFullDetailsAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventWithFullDetailsDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية محرر على الأقل
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Editor))
+            return ApiResponse<EventWithFullDetailsDto>.FailureResponse("غير مصرح لك بتعديل هذا الحدث");
 
         // تحديث بيانات الحدث الأساسية
         if (request.Title != null) evt.Title = request.Title;
@@ -362,8 +378,12 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventDto>> UpdateStatusAsync(Guid id, Guid userId, EventStatus status)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية مدير
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Editor))
+            return ApiResponse<EventDto>.FailureResponse("غير مصرح لك بتعديل حالة هذا الحدث");
 
         evt.Status = status;
         _unitOfWork.Events.Update(evt);
@@ -482,8 +502,12 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventDto>> PublishAsync(Guid id, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية مدير
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Editor))
+            return ApiResponse<EventDto>.FailureResponse("غير مصرح لك بنشر هذا الحدث");
 
         evt.Status = EventStatus.Published;
         _unitOfWork.Events.Update(evt);
@@ -495,8 +519,12 @@ public class EventService : IEventService
     public async Task<ApiResponse<EventDto>> CloseAsync(Guid id, Guid userId)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(id);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<EventDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية مدير
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(id, userId, CollaboratorRole.Editor))
+            return ApiResponse<EventDto>.FailureResponse("غير مصرح لك بإغلاق هذا الحدث");
 
         evt.Status = EventStatus.Closed;
         _unitOfWork.Events.Update(evt);
@@ -527,6 +555,16 @@ public class EventService : IEventService
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         return new string(Enumerable.Repeat(chars, length)
             .Select(s => s[_random.Next(s.Length)]).ToArray());
+    }
+
+    /// <summary>
+    /// التحقق من أن المستخدم لديه صلاحية متعاون بالحد الأدنى المطلوب
+    /// </summary>
+    private async Task<bool> HasMinimumRoleAsync(Guid eventId, Guid userId, CollaboratorRole minimumRole)
+    {
+        var role = await _unitOfWork.EventCollaborators.GetRoleAsync(eventId, userId);
+        if (role == null) return false;
+        return role.Value >= minimumRole;
     }
 
     public async Task<ApiResponse<DashboardStatsDto>> GetDashboardStatsAsync(Guid userId)
@@ -615,9 +653,20 @@ public class EventService : IEventService
 
     public async Task<ApiResponse<DrawResultDto>> DrawWinnersAsync(Guid eventId, Guid userId, int winnersCount, List<string>? winnerResponseIds = null)
     {
+        // === Fix 5: Validation ===
+        if (winnersCount <= 0)
+            return ApiResponse<DrawResultDto>.FailureResponse("عدد الفائزين يجب أن يكون أكبر من صفر");
+
+        if (winnersCount > 100)
+            return ApiResponse<DrawResultDto>.FailureResponse("عدد الفائزين كبير جداً");
+
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<DrawResultDto>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية محرر
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(eventId, userId, CollaboratorRole.Editor))
+            return ApiResponse<DrawResultDto>.FailureResponse("غير مصرح لك بإجراء السحب في هذا الحدث");
 
         if (evt.Type != EventType.Competition)
             return ApiResponse<DrawResultDto>.FailureResponse("هذا الحدث ليس مسابقة");
@@ -625,22 +674,21 @@ public class EventService : IEventService
         if (evt.DrawCompleted)
             return ApiResponse<DrawResultDto>.FailureResponse("تم إجراء السحب مسبقاً");
 
-        // جلب جميع الردود المكتملة
-        var responses = await _unitOfWork.Responses.GetByEventIdAsync(eventId);
-        var completedResponses = responses
-            .Where(r => r.Status == Domain.Enums.ResponseStatus.Completed)
-            .ToList();
+        // === Fix 1 + Fix 3: استعلام خفيف — بدون AnswersJson — مفلتر بـ Completed في SQL ===
+        var completedResponses = await _unitOfWork.Responses.GetCompletedForDrawAsync(eventId);
+
+        // === Fix 4: منطق فلترة المؤهلين مستخرج كـ helper ===
+        var eligibleResponses = FilterQualified(completedResponses, evt);
 
         List<Domain.Entities.Response> winners;
 
         if (winnerResponseIds != null && winnerResponseIds.Count > 0)
         {
             // === الفائزون مختارون من العجلة في Frontend ===
-            // نحفظ IDs الفائزين المرسلة مباشرة
             var winnerGuids = winnerResponseIds
                 .Select(id => Guid.TryParse(id, out var g) ? g : Guid.Empty)
                 .Where(g => g != Guid.Empty)
-                .ToList();
+                .ToHashSet();
 
             winners = completedResponses
                 .Where(r => winnerGuids.Contains(r.Id))
@@ -651,24 +699,7 @@ public class EventService : IEventService
         }
         else
         {
-            // === اختيار عشوائي (السلوك القديم) ===
-            var eligibleResponses = completedResponses;
-            if (evt.CompetitionMode == "quiz_draw" && evt.QualifyingScore.HasValue)
-            {
-                eligibleResponses = completedResponses.Where(r =>
-                {
-                    if (r.Percentage.HasValue)
-                        return r.Percentage.Value >= evt.QualifyingScore.Value;
-
-                    if (r.TotalPoints.HasValue && r.TotalPoints > 0 && r.Score.HasValue)
-                    {
-                        double percentage = ((double)r.Score.Value / r.TotalPoints.Value) * 100;
-                        return percentage >= evt.QualifyingScore.Value;
-                    }
-                    return false;
-                }).ToList();
-            }
-
+            // === اختيار عشوائي ===
             if (eligibleResponses.Count == 0)
                 return ApiResponse<DrawResultDto>.FailureResponse("لا يوجد مشاركون مؤهلون للسحب");
 
@@ -710,35 +741,49 @@ public class EventService : IEventService
         _unitOfWork.Events.Update(evt);
         await _unitOfWork.SaveChangesAsync();
 
-        // حساب المؤهلين للعرض
-        var qualifiedCount = completedResponses.Count;
-        if (evt.CompetitionMode == "quiz_draw" && evt.QualifyingScore.HasValue)
-        {
-            qualifiedCount = completedResponses.Count(r =>
-                (r.Percentage.HasValue && r.Percentage.Value >= evt.QualifyingScore.Value) ||
-                (r.TotalPoints.HasValue && r.TotalPoints > 0 && r.Score.HasValue &&
-                 ((double)r.Score.Value / r.TotalPoints.Value) * 100 >= evt.QualifyingScore.Value)
-            );
-            // fallback: لو لم يكن Backend يحسب الدرجات، نستخدم عدد الفائزين كحد أدنى
-            if (qualifiedCount == 0 && winnerResponseIds != null)
-                qualifiedCount = winners.Count;
-        }
-
         var result = new DrawResultDto
         {
             Winners = winnerDtos,
             TotalParticipants = completedResponses.Count,
-            QualifiedCount = qualifiedCount
+            QualifiedCount = eligibleResponses.Count
         };
 
         return ApiResponse<DrawResultDto>.SuccessResponse(result, "تم إجراء السحب العشوائي بنجاح");
     }
 
+    /// <summary>
+    /// فلترة المشاركين المؤهلين حسب نوع المسابقة ودرجة التأهل
+    /// </summary>
+    private static List<Domain.Entities.Response> FilterQualified(
+        IReadOnlyList<Domain.Entities.Response> responses, Event evt)
+    {
+        if (evt.CompetitionMode != "quiz_draw" || !evt.QualifyingScore.HasValue)
+            return responses.ToList();
+
+        var qualifyingScore = evt.QualifyingScore.Value;
+        return responses.Where(r =>
+        {
+            if (r.Percentage.HasValue)
+                return r.Percentage.Value >= qualifyingScore;
+
+            if (r.TotalPoints.HasValue && r.TotalPoints > 0 && r.Score.HasValue)
+            {
+                double percentage = ((double)r.Score.Value / r.TotalPoints.Value) * 100;
+                return percentage >= qualifyingScore;
+            }
+            return false;
+        }).ToList();
+    }
+
     public async Task<ApiResponse<string>> UpdateResultsSharingAsync(Guid eventId, Guid userId, ShareResultsRequest request)
     {
         var evt = await _unitOfWork.Events.GetByIdAsync(eventId);
-        if (evt == null || evt.UserId != userId)
+        if (evt == null)
             return ApiResponse<string>.FailureResponse("الحدث غير موجود");
+
+        // التحقق: المالك أو متعاون بصلاحية مدير
+        if (evt.UserId != userId && !await HasMinimumRoleAsync(eventId, userId, CollaboratorRole.Editor))
+            return ApiResponse<string>.FailureResponse("غير مصرح لك بتعديل إعدادات المشاركة");
 
         evt.IsResultsShared = request.IsEnabled;
 

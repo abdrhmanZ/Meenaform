@@ -19,6 +19,9 @@ public interface IUnitOfWork : IDisposable
     ISignatureFieldRepository SignatureFields { get; }
     IDocumentSignatureRepository DocumentSignatures { get; }
 
+    // Collaboration Repositories
+    IEventCollaboratorRepository EventCollaborators { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

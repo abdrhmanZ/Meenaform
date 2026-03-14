@@ -15,14 +15,11 @@ import {
     Share2,
     Link2,
     Mail,
-    Shield,
     Trash2,
     Plus,
     Copy,
     Check,
     Loader2,
-    Download,
-    Dices,
     AlertCircle,
 } from "lucide-react";
 import { eventsService } from "@/lib/api/services";
@@ -42,8 +39,6 @@ export default function ShareResultsDialog({
     onUpdated,
 }: ShareResultsDialogProps) {
     const [isEnabled, setIsEnabled] = useState(false);
-    const [allowExport, setAllowExport] = useState(false);
-    const [allowDraw, setAllowDraw] = useState(false);
     const [emails, setEmails] = useState<string[]>([]);
     const [newEmail, setNewEmail] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -57,8 +52,6 @@ export default function ShareResultsDialog({
     useEffect(() => {
         if (open && event) {
             setIsEnabled(event.settings?.isResultsShared || false);
-            setAllowExport(event.settings?.resultsSharePermissions?.allowExport || false);
-            setAllowDraw(event.settings?.resultsSharePermissions?.allowDraw || false);
             setEmails(event.settings?.resultsSharedEmails || []);
             setLocalToken(event.settings?.resultsShareToken || null);
             setSaveError("");
@@ -128,7 +121,7 @@ export default function ShareResultsDialog({
             const returnedToken = await eventsService.updateResultsSharing(event.id, {
                 isEnabled,
                 allowedEmails: emails,
-                permissions: { allowExport, allowDraw },
+                permissions: { allowExport: false, allowDraw: false },
             });
 
             // تحديث الـ token المحلي فوراً → الرابط يظهر بدون تأخير
@@ -209,33 +202,6 @@ export default function ShareResultsDialog({
                                 </div>
                             )}
 
-                            {/* الصلاحيات */}
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 text-gray-500" />
-                                    <Label className="text-sm font-semibold text-gray-900">صلاحيات المستلم</Label>
-                                </div>
-
-                                <div className="space-y-2 pr-6">
-                                    <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                                        <div className="flex items-center gap-2.5">
-                                            <Download className="w-4 h-4 text-gray-400" />
-                                            <span className="text-sm text-gray-700">السماح بتصدير النتائج (PDF / Excel)</span>
-                                        </div>
-                                        <Checkbox checked={allowExport} onCheckedChange={(v) => setAllowExport(!!v)} />
-                                    </div>
-
-                                    {event.type === "competition" && (
-                                        <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <div className="flex items-center gap-2.5">
-                                                <Dices className="w-4 h-4 text-gray-400" />
-                                                <span className="text-sm text-gray-700">السماح بإجراء السحب العشوائي</span>
-                                            </div>
-                                            <Checkbox checked={allowDraw} onCheckedChange={(v) => setAllowDraw(!!v)} />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
 
                             {/* الإيميلات المسموح لها */}
                             <div className="space-y-3">

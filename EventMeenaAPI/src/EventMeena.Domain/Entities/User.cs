@@ -26,5 +26,6 @@ public class User : AuditableEntity
     public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
     public virtual ICollection<UserTemplate> Templates { get; set; } = new List<UserTemplate>();
+    public virtual ICollection<EventCollaborator> CollaboratedEvents { get; set; } = new List<EventCollaborator>();
 }
 

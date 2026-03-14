@@ -62,6 +62,7 @@ public static class ServiceExtensions
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IResponseService, ResponseService>();
         services.AddScoped<ITemplateService, TemplateService>();
+        services.AddScoped<ICollaboratorService, CollaboratorService>();
 
         return services;
     }

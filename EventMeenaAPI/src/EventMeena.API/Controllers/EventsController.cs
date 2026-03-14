@@ -15,11 +15,13 @@ public class EventsController : BaseApiController
 {
     private readonly IEventService _eventService;
     private readonly ISendEventService _sendEventService;
+    private readonly ICollaboratorService _collaboratorService;
 
-    public EventsController(IEventService eventService, ISendEventService sendEventService)
+    public EventsController(IEventService eventService, ISendEventService sendEventService, ICollaboratorService collaboratorService)
     {
         _eventService = eventService;
         _sendEventService = sendEventService;
+        _collaboratorService = collaboratorService;
     }
 
     /// <summary>
@@ -373,6 +375,92 @@ public class EventsController : BaseApiController
             return BadRequestResponse<string>(result.Message ?? "فشل تحديث إعدادات المشاركة");
 
         return Success(result.Data!, result.Message ?? "تم تحديث إعدادات المشاركة");
+    }
+
+    // ===== Collaboration Endpoints =====
+
+    /// <summary>
+    /// جلب المتعاونين في حدث معين
+    /// </summary>
+    [HttpGet("{id:guid}/collaborators")]
+    public async Task<ActionResult<ApiResponse<List<CollaboratorDto>>>> GetCollaborators(Guid id)
+    {
+        var result = await _collaboratorService.GetEventCollaboratorsAsync(id, CurrentUserId);
+
+        if (!result.Success)
+            return BadRequestResponse<List<CollaboratorDto>>(result.Message ?? "فشل جلب المتعاونين");
+
+        return Success(result.Data!);
+    }
+
+    /// <summary>
+    /// إضافة متعاون جديد للحدث
+    /// </summary>
+    [HttpPost("{id:guid}/collaborators")]
+    public async Task<ActionResult<ApiResponse<CollaboratorDto>>> AddCollaborator(Guid id, [FromBody] AddCollaboratorRequest request)
+    {
+        var result = await _collaboratorService.AddCollaboratorAsync(id, CurrentUserId, request);
+
+        if (!result.Success)
+            return BadRequestResponse<CollaboratorDto>(result.Message ?? "فشل إضافة المتعاون");
+
+        return Created(result.Data!, result.Message);
+    }
+
+    /// <summary>
+    /// تعديل صلاحية متعاون
+    /// </summary>
+    [HttpPut("{id:guid}/collaborators/{userId:guid}")]
+    public async Task<ActionResult<ApiResponse<CollaboratorDto>>> UpdateCollaboratorRole(Guid id, Guid userId, [FromBody] UpdateCollaboratorRoleRequest request)
+    {
+        var result = await _collaboratorService.UpdateCollaboratorRoleAsync(id, userId, CurrentUserId, request);
+
+        if (!result.Success)
+            return BadRequestResponse<CollaboratorDto>(result.Message ?? "فشل تعديل الصلاحية");
+
+        return Success(result.Data!, result.Message);
+    }
+
+    /// <summary>
+    /// إزالة متعاون من الحدث
+    /// </summary>
+    [HttpDelete("{id:guid}/collaborators/{userId:guid}")]
+    public async Task<ActionResult<ApiResponse>> RemoveCollaborator(Guid id, Guid userId)
+    {
+        var result = await _collaboratorService.RemoveCollaboratorAsync(id, userId, CurrentUserId);
+
+        if (!result.Success)
+            return BadRequestNoContent(result.Message ?? "فشل إزالة المتعاون");
+
+        return SuccessNoContent(result.Message);
+    }
+
+    /// <summary>
+    /// البحث عن مستخدمين بالبريد الإلكتروني (لإضافتهم كمتعاونين)
+    /// </summary>
+    [HttpGet("users/search")]
+    public async Task<ActionResult<ApiResponse<List<UserSearchResultDto>>>> SearchUsers([FromQuery] string email)
+    {
+        var result = await _collaboratorService.SearchUsersAsync(email, CurrentUserId);
+
+        if (!result.Success)
+            return BadRequestResponse<List<UserSearchResultDto>>(result.Message ?? "فشل البحث");
+
+        return Success(result.Data!);
+    }
+
+    /// <summary>
+    /// جلب الأحداث المشتركة مع المستخدم الحالي
+    /// </summary>
+    [HttpGet("shared-with-me")]
+    public async Task<ActionResult<ApiResponse<List<SharedEventListItemDto>>>> GetSharedWithMe()
+    {
+        var result = await _collaboratorService.GetSharedWithMeEventsAsync(CurrentUserId);
+
+        if (!result.Success)
+            return BadRequestResponse<List<SharedEventListItemDto>>(result.Message ?? "فشل جلب الأحداث المشتركة");
+
+        return Success(result.Data!);
     }
 }
 

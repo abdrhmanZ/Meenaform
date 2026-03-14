@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
+import { SharedEvent } from "@/types/event";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/dashboard/LoadingState";
 import { Response } from "@/types/response";
@@ -43,7 +44,7 @@ function ParticipantDetailsPageContent() {
   const eventId = params.id as string;
   const responseId = params.responseId as string;
 
-  const { currentEvent, fetchEventById, events } = useEventsStore();
+  const { currentEvent, fetchEventById, events, sharedEvents, fetchSharedEvents } = useEventsStore();
   const [response, setResponse] = useState<Response | null>(null);
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -57,6 +58,15 @@ function ParticipantDetailsPageContent() {
   );
   const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
 
+  // التحقق من أن الحدث مشترك
+  const sharedEvent = useMemo(
+    () => sharedEvents.find((e) => e.id === eventId) as SharedEvent | undefined,
+    [sharedEvents, eventId]
+  );
+  const isShared = !!sharedEvent;
+  const myRole = sharedEvent?.myRole;
+  const canEdit = !isShared || myRole === "editor";
+
   // ✅ Parallel: نجلب الحدث + الـ response في نفس الوقت (بدل التسلسل)
   useEffect(() => {
     if (!eventId || hasFetched.current) return;
@@ -64,6 +74,7 @@ function ParticipantDetailsPageContent() {
 
     // جلب الحدث والـ response بالتوازي
     fetchEventById(eventId);
+    fetchSharedEvents();
 
     // جلب الـ response فوراً بدون انتظار الحدث
     const loadResponseParallel = async () => {
@@ -214,15 +225,17 @@ function ParticipantDetailsPageContent() {
               </div>
             </div>
 
-            {/* Export Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExportDialog(true)}
-            >
-              <Download className="w-4 h-4 ml-2" />
-              تصدير PDF
-            </Button>
+            {/* Export Button — مخفي عن المشاهدين */}
+            {canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportDialog(true)}
+              >
+                <Download className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
+            )}
           </div>
 
           {/* Mobile Layout */}
@@ -240,13 +253,15 @@ function ParticipantDetailsPageContent() {
                 </Link>
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExportDialog(true)}
-              >
-                <Download className="w-4 h-4" />
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportDialog(true)}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             <div>
@@ -389,15 +404,17 @@ function ParticipantDetailsPageContent() {
         </div>
       </div>
 
-      {/* Export PDF Dialog */}
-      <ExportPDFDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        eventTitle={displayEvent.title}
-        responses={[response]} // Single participant
-        components={displayEvent.sections?.flatMap(section => section.components) ?? []}
-        isSingleParticipant={true}
-      />
+      {/* Export PDF Dialog — مخفي عن المشاهدين */}
+      {canEdit && (
+        <ExportPDFDialog
+          open={showExportDialog}
+          onOpenChange={setShowExportDialog}
+          eventTitle={displayEvent.title}
+          responses={[response]}
+          components={displayEvent.sections?.flatMap(section => section.components) ?? []}
+          isSingleParticipant={true}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -34,6 +34,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<SignatureField> SignatureFields => Set<SignatureField>();
     public DbSet<DocumentSignature> DocumentSignatures => Set<DocumentSignature>();
 
+    // Collaboration DbSets
+    public DbSet<EventCollaborator> EventCollaborators => Set<EventCollaborator>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEventsStore } from "@/store/eventsStore";
+import { SharedEvent } from "@/types/event";
 import { useContactsStore } from "@/store/contactsStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -13,6 +14,8 @@ import EventQRCode from "@/components/events/EventQRCode";
 import EventPublicLink from "@/components/events/EventPublicLink";
 import EventSectionsDisplay from "@/components/events/EventSectionsDisplay";
 import DeleteEventDialog from "@/components/events/DeleteEventDialog";
+import CollaboratorsDialog from "@/components/events/CollaboratorsDialog";
+import CollaboratorsCard from "@/components/events/CollaboratorsCard";
 import SendEventDialog from "@/components/events/create/SendEventDialog";
 import SaveAsTemplateDialog from "@/components/templates/SaveAsTemplateDialog";
 import LoadingState from "@/components/dashboard/LoadingState";
@@ -39,6 +42,8 @@ function EventDetailsPageContent() {
     archiveEvent,
     updateEventStatus,
     events,
+    sharedEvents,
+    fetchSharedEvents,
   } = useEventsStore();
 
   const { fetchContacts, fetchGroups } = useContactsStore();
@@ -46,6 +51,7 @@ function EventDetailsPageContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
+  const [collaboratorsDialogOpen, setCollaboratorsDialogOpen] = useState(false);
   const [documentSigningEvent, setDocumentSigningEvent] = useState<DocumentSigningEvent | null>(null);
 
   const hasFetched = useRef(false);
@@ -57,14 +63,23 @@ function EventDetailsPageContent() {
   );
   const displayEvent = currentEvent?.id === eventId ? currentEvent : cachedEvent || null;
 
+  // التحقق من أن الحدث مشترك
+  const sharedEvent = useMemo(
+    () => sharedEvents.find((e) => e.id === eventId) as SharedEvent | undefined,
+    [sharedEvents, eventId]
+  );
+  const isShared = !!sharedEvent;
+  const myRole = sharedEvent?.myRole;
+
   useEffect(() => {
     if (eventId && !hasFetched.current) {
       hasFetched.current = true;
       fetchEventById(eventId);
       fetchContacts();
       fetchGroups();
+      fetchSharedEvents();
     }
-  }, [eventId, fetchEventById, fetchContacts, fetchGroups]);
+  }, [eventId, fetchEventById, fetchContacts, fetchGroups, fetchSharedEvents]);
 
   // تحميل بيانات حدث التوقيع إذا كان النوع document_signing
   useEffect(() => {
@@ -188,6 +203,9 @@ function EventDetailsPageContent() {
         onSaveAsTemplate={() => setSaveAsTemplateDialogOpen(true)}
         onPublish={handlePublish}
         onUnpublish={handleUnpublish}
+        onManageCollaborators={() => setCollaboratorsDialogOpen(true)}
+        isShared={isShared}
+        myRole={myRole}
       />
 
       {/* المحتوى */}
@@ -237,6 +255,14 @@ function EventDetailsPageContent() {
 
             {/* Public Link */}
             <EventPublicLink shareCode={displayEvent.shareCode || ""} />
+
+            {/* Collaborators Card - Owner only */}
+            {!isShared && (
+              <CollaboratorsCard
+                eventId={eventId}
+                onManageClick={() => setCollaboratorsDialogOpen(true)}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -263,6 +289,14 @@ function EventDetailsPageContent() {
         event={displayEvent}
         open={saveAsTemplateDialogOpen}
         onOpenChange={setSaveAsTemplateDialogOpen}
+      />
+
+      {/* Collaborators Dialog */}
+      <CollaboratorsDialog
+        open={collaboratorsDialogOpen}
+        onOpenChange={setCollaboratorsDialogOpen}
+        eventId={eventId}
+        eventTitle={displayEvent.title}
       />
     </DashboardLayout>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Users, Trophy, Loader2, AlertCircle, CheckCircle, Play } from "lucide-react";
+import { X, Users, Trophy, Loader2, AlertCircle, CheckCircle, Play, RotateCcw } from "lucide-react";
 import LuckyWheel from "./LuckyWheel";
 import WinnersDisplay from "./WinnersDisplay";
 import { Response } from "@/types/response";
@@ -36,6 +36,7 @@ export default function DrawPage({ event, responses, onClose, onDrawSaved }: Dra
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
+    const [savedWinnerIds, setSavedWinnerIds] = useState<string[]>([]);
 
     const winnersCount = event.settings.winnersCount || 1;
     const mode = event.settings.competitionMode || "random_draw";
@@ -68,11 +69,15 @@ export default function DrawPage({ event, responses, onClose, onDrawSaved }: Dra
         }));
         setFinalWinners(mapped);
         setPhase("winners");
+        const ids = wheelWinners.map((w) => w.id);
+        setSavedWinnerIds(ids);
+        await saveDrawResults(ids);
+    };
 
-        // حفظ الفائزين في API — نرسل IDs الفائزين المختارين من العجلة
+    const saveDrawResults = async (winnerIds: string[]) => {
         setIsSaving(true);
+        setError(null);
         try {
-            const winnerIds = wheelWinners.map((w) => w.id);
             await eventsService.drawWinners(event.id, winnersCount, winnerIds);
             setIsSaved(true);
         } catch (err) {
@@ -103,9 +108,9 @@ export default function DrawPage({ event, responses, onClose, onDrawSaved }: Dra
 
     return (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4 relative overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4 relative flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-5 flex items-center justify-between">
+                <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                             <Trophy className="w-6 h-6 text-white" />
@@ -128,7 +133,7 @@ export default function DrawPage({ event, responses, onClose, onDrawSaved }: Dra
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-5 overflow-y-auto flex-1">
                     {/* مرحلة التحضير */}
                     {phase === "prepare" && (
                         <div className="text-center space-y-6">
@@ -217,18 +222,26 @@ export default function DrawPage({ event, responses, onClose, onDrawSaved }: Dra
                                 </div>
                             )}
                             {error && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                    {error}
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                        {error}
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => saveDrawResults(savedWinnerIds)}
+                                        disabled={isSaving}
+                                        className="w-full gap-1.5 text-red-700 border-red-300 hover:bg-red-100"
+                                    >
+                                        <RotateCcw className="w-3.5 h-3.5" />
+                                        إعادة المحاولة
+                                    </Button>
                                 </div>
                             )}
                             <WinnersDisplay
                                 winners={finalWinners}
                                 competitionTitle={event.title}
-                                onShare={() => {
-                                    const text = `نتائج مسابقة "${event.title}":\n${finalWinners.map((w) => `${w.rank}. ${w.name}`).join("\n")}`;
-                                    navigator.clipboard?.writeText(text);
-                                }}
                             />
                             <Button
                                 variant="outline"

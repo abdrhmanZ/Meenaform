@@ -144,5 +144,6 @@ public class Event : AuditableEntity
     public virtual ICollection<Response> Responses { get; set; } = new List<Response>();
     public virtual ICollection<SendHistory> SendHistories { get; set; } = new List<SendHistory>();
     public virtual ICollection<SignatureField> SignatureFields { get; set; } = new List<SignatureField>();
+    public virtual ICollection<EventCollaborator> Collaborators { get; set; } = new List<EventCollaborator>();
 }
 
