@@ -146,6 +146,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
 
       // تحديث المجموعات إذا تم إضافة جهة الاتصال لمجموعات
       if (data.groupIds && data.groupIds.length > 0) {
+        hasFetchedGroups = false;
         await get().fetchGroups();
       }
 
@@ -179,6 +180,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       }));
 
       // تحديث المجموعات
+      hasFetchedGroups = false;
       await get().fetchGroups();
     } catch (error) {
       const errorMessage =
@@ -208,6 +210,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       }));
 
       // تحديث المجموعات
+      hasFetchedGroups = false;
       await get().fetchGroups();
     } catch (error) {
       const errorMessage =
@@ -297,6 +300,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
 
       // تحديث جهات الاتصال إذا تم إضافة جهات اتصال للمجموعة
       if (data.contactIds && data.contactIds.length > 0) {
+        hasFetchedContacts = false;
         await get().fetchContacts();
       }
 
@@ -330,6 +334,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       }));
 
       // تحديث جهات الاتصال
+      hasFetchedContacts = false;
       await get().fetchContacts();
     } catch (error) {
       const errorMessage =
@@ -359,6 +364,7 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       }));
 
       // تحديث جهات الاتصال
+      hasFetchedContacts = false;
       await get().fetchContacts();
     } catch (error) {
       const errorMessage =
@@ -382,6 +388,8 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       await groupsService.addContacts(groupId, contactIds);
 
       // تحديث البيانات
+      hasFetchedGroups = false;
+      hasFetchedContacts = false;
       await get().fetchGroups();
       await get().fetchContacts();
 
@@ -408,6 +416,8 @@ export const useContactsStore = create<ContactsStoreState>((set, get) => ({
       await groupsService.removeContacts(groupId, contactIds);
 
       // تحديث البيانات
+      hasFetchedGroups = false;
+      hasFetchedContacts = false;
       await get().fetchGroups();
       await get().fetchContacts();
 

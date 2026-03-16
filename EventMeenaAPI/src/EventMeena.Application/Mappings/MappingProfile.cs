@@ -112,6 +112,13 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Stats, opt => opt.MapFrom(src => CalculateGroupStats(src.ContactGroups)));
         CreateMap<CreateGroupRequest, Group>();
         CreateMap<UpdateGroupRequest, Group>()
+            .ForMember(dest => dest.ContactGroups, opt => opt.Ignore())
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.UserId, opt => opt.Ignore())
+            .ForMember(dest => dest.User, opt => opt.Ignore())
+            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
         // Response Mappings

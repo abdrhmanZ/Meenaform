@@ -91,10 +91,40 @@ public class GroupService : IGroupService
             return ApiResponse<GroupDto>.FailureResponse("المجموعة غير موجودة");
 
         _mapper.Map(request, group);
+
+        // تحديث جهات الاتصال إذا تم إرسال ContactIds
+        if (request.ContactIds != null)
+        {
+            // الحصول على الـ IDs الحالية
+            var existingContactIds = group.ContactGroups.Select(cg => cg.ContactId).ToHashSet();
+            var newContactIds = request.ContactIds.ToHashSet();
+
+            // حذف العلاقات التي تمت إزالتها
+            var toRemove = group.ContactGroups.Where(cg => !newContactIds.Contains(cg.ContactId)).ToList();
+            foreach (var cg in toRemove)
+            {
+                group.ContactGroups.Remove(cg);
+            }
+
+            // إضافة العلاقات الجديدة فقط
+            var toAdd = newContactIds.Where(cid => !existingContactIds.Contains(cid));
+            foreach (var contactId in toAdd)
+            {
+                group.ContactGroups.Add(new ContactGroup
+                {
+                    ContactId = contactId,
+                    GroupId = id,
+                    AddedAt = DateTime.UtcNow
+                });
+            }
+        }
+
         _unitOfWork.Groups.Update(group);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<GroupDto>.SuccessResponse(_mapper.Map<GroupDto>(group), "تم تحديث المجموعة بنجاح");
+        // إعادة جلب المجموعة مع البيانات الكاملة للإحصائيات
+        var updatedGroup = await _unitOfWork.Groups.GetByIdWithContactsAsync(id);
+        return ApiResponse<GroupDto>.SuccessResponse(_mapper.Map<GroupDto>(updatedGroup!), "تم تحديث المجموعة بنجاح");
     }
 
     public async Task<ApiResponse> DeleteAsync(Guid id, Guid userId)

@@ -30,6 +30,9 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load secrets from untracked file (overrides appsettings.json placeholders)
+builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
+
 builder.Host.UseWindowsService();
 builder.Host.UseSerilog();
 

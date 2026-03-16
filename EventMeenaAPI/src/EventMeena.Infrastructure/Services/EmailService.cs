@@ -1,57 +1,70 @@
 using EventMeena.Application.Services.Interfaces;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SendGrid;
-using SendGrid.Helpers.Mail;
+using MimeKit;
 
 namespace EventMeena.Infrastructure.Services;
 
 /// <summary>
-/// Email service implementation using SendGrid
+/// Email service implementation using SMTP (Brevo/MailKit)
 /// </summary>
 public class EmailService : IEmailService
 {
-    private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
-    private readonly SendGridClient? _client;
+    private readonly string _smtpServer;
+    private readonly int _smtpPort;
+    private readonly string _smtpUsername;
+    private readonly string _smtpPassword;
     private readonly string _fromEmail;
     private readonly string _fromName;
+    private readonly bool _isConfigured;
 
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
-        _configuration = configuration;
         _logger = logger;
-        var apiKey = _configuration["EmailSettings:SendGridApiKey"] ?? string.Empty;
-        _client = !string.IsNullOrEmpty(apiKey) ? new SendGridClient(apiKey) : null;
-        _fromEmail = _configuration["EmailSettings:FromEmail"] ?? "noreply@eventmeena.com";
-        _fromName = _configuration["EmailSettings:FromName"] ?? "Event Meena";
+        _smtpServer = configuration["EmailSettings:SmtpServer"] ?? string.Empty;
+        _smtpPort = int.TryParse(configuration["EmailSettings:SmtpPort"], out var port) ? port : 587;
+        _smtpUsername = configuration["EmailSettings:SmtpUsername"] ?? string.Empty;
+        _smtpPassword = configuration["EmailSettings:SmtpPassword"] ?? string.Empty;
+        _fromEmail = configuration["EmailSettings:FromEmail"] ?? "noreply@eventmeena.com";
+        _fromName = configuration["EmailSettings:FromName"] ?? "Event Meena";
+
+        _isConfigured = !string.IsNullOrEmpty(_smtpServer) && !string.IsNullOrEmpty(_smtpPassword);
     }
 
     /// <inheritdoc />
     public async Task<bool> SendEmailAsync(string toEmail, string toName, string subject, string htmlContent, string? plainTextContent = null)
     {
-        if (_client == null)
+        if (!_isConfigured)
         {
-            _logger.LogWarning("SendGrid API Key is not configured. Email not sent to {Email}", toEmail);
+            _logger.LogWarning("SMTP is not configured. Email not sent to {Email}", toEmail);
             return false;
         }
 
         try
         {
-            var from = new EmailAddress(_fromEmail, _fromName);
-            var to = new EmailAddress(toEmail, toName);
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent ?? string.Empty, htmlContent);
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_fromName, _fromEmail));
+            message.To.Add(new MailboxAddress(toName, toEmail));
+            message.Subject = subject;
 
-            var response = await _client.SendEmailAsync(msg);
-
-            if (response.IsSuccessStatusCode)
+            var bodyBuilder = new BodyBuilder
             {
-                _logger.LogInformation("Email sent successfully to {Email}", toEmail);
-                return true;
-            }
+                HtmlBody = htmlContent,
+                TextBody = plainTextContent ?? string.Empty
+            };
+            message.Body = bodyBuilder.ToMessageBody();
 
-            _logger.LogWarning("Failed to send email to {Email}. Status: {Status}", toEmail, response.StatusCode);
-            return false;
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_smtpUsername, _smtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email sent successfully to {Email}", toEmail);
+            return true;
         }
         catch (Exception ex)
         {
@@ -175,4 +188,3 @@ public class EmailService : IEmailService
         return await SendEmailAsync(toEmail, toName, subject, htmlContent, plainText);
     }
 }
-

@@ -37,6 +37,7 @@ public class GroupRepository : GenericRepository<Group>, IGroupRepository
     public async Task<Group?> GetByIdWithContactsAsync(Guid id)
     {
         return await _dbSet
+            .AsTracking()
             .Include(g => g.ContactGroups)
                 .ThenInclude(cg => cg.Contact)
             .FirstOrDefaultAsync(g => g.Id == id);

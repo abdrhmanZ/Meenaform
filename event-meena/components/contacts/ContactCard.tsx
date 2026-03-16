@@ -10,7 +10,6 @@ import {
   Trash2,
   Briefcase,
   Tag,
-  TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -91,22 +90,26 @@ export default function ContactCard({
       </div>
 
       {/* Contact Info */}
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Mail className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{contact.email}</span>
+      <div className="p-3 bg-gray-50 rounded-xl space-y-2.5 mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <Mail className="w-4 h-4 text-blue-600" />
+          </div>
+          <span className="text-sm text-gray-700 truncate">{contact.email}</span>
         </div>
         {contact.phone && (
-          <div className="flex items-center gap-2 text-sm text-gray-600" dir="ltr">
-            <Phone className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">{contact.phone}</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <Phone className="w-4 h-4 text-green-600" />
+            </div>
+            <span className="text-sm text-gray-700 truncate" dir="ltr">{contact.phone}</span>
           </div>
         )}
       </div>
 
       {/* Groups */}
       {contactGroups.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-3">
           <div className="flex flex-wrap gap-2">
             {contactGroups.slice(0, 3).map((group) => (
               <Badge
@@ -132,7 +135,7 @@ export default function ContactCard({
 
       {/* Tags */}
       {contact.tags && contact.tags.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-3">
           <div className="flex flex-wrap gap-2">
             {contact.tags.slice(0, 3).map((tag) => (
               <div
@@ -151,31 +154,6 @@ export default function ContactCard({
           </div>
         </div>
       )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">الأحداث</p>
-          <p className="text-sm font-bold text-gray-900">
-            {contact.stats.eventsSent}
-          </p>
-        </div>
-        <div className="text-center border-x border-gray-100">
-          <p className="text-xs text-gray-500 mb-1">المكتملة</p>
-          <p className="text-sm font-bold text-green-600">
-            {contact.stats.eventsCompleted}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">الاستجابة</p>
-          <div className="flex items-center justify-center gap-1">
-            <TrendingUp className="w-3 h-3 text-blue-600" />
-            <p className="text-sm font-bold text-blue-600">
-              {contact.stats.responseRate}%
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Notes */}
       {contact.notes && (

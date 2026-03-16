@@ -1,0 +1,150 @@
+2026-03-11 18:19:46.170 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method43(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:19:46.179 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method42(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:19:51.608 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method51(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:19:51.608 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method42(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:19:54.948 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method42(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:19:54.951 +02:00 [ERR] حدث خطأ غير متوقع: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+System.InvalidOperationException: Unable to resolve service for type 'EventMeena.Application.Services.Interfaces.ICollaboratorService' while attempting to activate 'EventMeena.API.Controllers.EventsController'.
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+   at lambda_method51(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:23:31.915 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-11 18:23:32.094 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-11 18:23:32.160 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-11 18:25:55.434 +02:00 [ERR] حدث خطأ غير متوقع: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+System.InvalidCastException: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+   at lambda_method993(Closure, Object, SharedEventListItemDto, ResolutionContext)
+   at AutoMapper.Mapper.MapCore[TSource,TDestination](TSource source, TDestination destination, ResolutionContext context, Type sourceType, Type destinationType, MemberMap memberMap)
+   at AutoMapper.Mapper.Map[TSource,TDestination](TSource source, TDestination destination)
+   at AutoMapper.Mapper.Map[TDestination](Object source)
+   at EventMeena.Application.Services.Implementations.CollaboratorService.GetSharedWithMeEventsAsync(Guid currentUserId) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.Application\Services\Implementations\CollaboratorService.cs:line 181
+   at EventMeena.API.Controllers.EventsController.GetSharedWithMe() in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Controllers\EventsController.cs:line 458
+   at lambda_method10(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:26:00.126 +02:00 [ERR] حدث خطأ غير متوقع: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+System.InvalidCastException: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+   at lambda_method993(Closure, Object, SharedEventListItemDto, ResolutionContext)
+   at AutoMapper.Mapper.MapCore[TSource,TDestination](TSource source, TDestination destination, ResolutionContext context, Type sourceType, Type destinationType, MemberMap memberMap)
+   at AutoMapper.Mapper.Map[TSource,TDestination](TSource source, TDestination destination)
+   at AutoMapper.Mapper.Map[TDestination](Object source)
+   at EventMeena.Application.Services.Implementations.CollaboratorService.GetSharedWithMeEventsAsync(Guid currentUserId) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.Application\Services\Implementations\CollaboratorService.cs:line 181
+   at EventMeena.API.Controllers.EventsController.GetSharedWithMe() in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Controllers\EventsController.cs:line 458
+   at lambda_method10(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27
+2026-03-11 18:26:02.769 +02:00 [ERR] حدث خطأ غير متوقع: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+System.InvalidCastException: Unable to cast object of type 'EventMeena.Application.DTOs.Events.EventListItemDto' to type 'EventMeena.Application.DTOs.Events.SharedEventListItemDto'.
+   at lambda_method993(Closure, Object, SharedEventListItemDto, ResolutionContext)
+   at AutoMapper.Mapper.MapCore[TSource,TDestination](TSource source, TDestination destination, ResolutionContext context, Type sourceType, Type destinationType, MemberMap memberMap)
+   at AutoMapper.Mapper.Map[TSource,TDestination](TSource source, TDestination destination)
+   at AutoMapper.Mapper.Map[TDestination](Object source)
+   at EventMeena.Application.Services.Implementations.CollaboratorService.GetSharedWithMeEventsAsync(Guid currentUserId) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.Application\Services\Implementations\CollaboratorService.cs:line 181
+   at EventMeena.API.Controllers.EventsController.GetSharedWithMe() in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Controllers\EventsController.cs:line 458
+   at lambda_method10(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at EventMeena.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\DELL\Desktop\frontend2\EventMeenaAPI\src\EventMeena.API\Middleware\ExceptionMiddleware.cs:line 27

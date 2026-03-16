@@ -103,12 +103,12 @@ export default function EventsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>العنوان</TableHead>
+            <TableHead className="min-w-[200px] max-w-xs">العنوان</TableHead>
             <TableHead>النوع</TableHead>
             <TableHead>الحالة</TableHead>
             <TableHead>الردود</TableHead>
             <TableHead>تاريخ الإنشاء</TableHead>
-            <TableHead className="text-left">الإجراءات</TableHead>
+            <TableHead className="text-left w-[80px]">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -119,13 +119,13 @@ export default function EventsTable({
             return (
               <TableRow key={event.id}>
                 {/* العنوان */}
-                <TableCell>
+                <TableCell className="min-w-[200px] max-w-xs">
                   <Link
                     href={`/dashboard/events/${event.id}`}
                     className="flex items-center gap-3 hover:text-primary"
                   >
-                    <TypeIcon className={`w-5 h-5 ${typeConfig.color}`} />
-                    <div>
+                    <TypeIcon className={`w-5 h-5 shrink-0 ${typeConfig.color}`} />
+                    <div className="min-w-0">
                       <p className="font-medium text-gray-900 line-clamp-1">
                         {event.title}
                       </p>
@@ -166,7 +166,7 @@ export default function EventsTable({
                 </TableCell>
 
                 {/* الإجراءات */}
-                <TableCell className="text-left">
+                <TableCell className="text-left w-[80px]">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">

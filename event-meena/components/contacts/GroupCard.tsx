@@ -3,7 +3,7 @@
 import { Contact, Group } from "@/types/contact";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Edit, Trash2, Mail, TrendingUp } from "lucide-react";
+import { Users, Edit, Trash2, Mail } from "lucide-react";
 
 interface GroupCardProps {
   group: Group;
@@ -71,13 +71,13 @@ export default function GroupCard({
       </div>
 
       {/* Members Count */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+      <div className="mb-3 px-3 py-2 bg-gray-50 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-gray-600" />
-            <span className="text-sm text-gray-600">عدد الأعضاء</span>
+            <Users className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-500">عدد الأعضاء</span>
           </div>
-          <span className="text-2xl font-bold text-gray-900">
+          <span className="text-base font-semibold text-gray-800">
             {group.membersCount}
           </span>
         </div>
@@ -128,34 +128,6 @@ export default function GroupCard({
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-100">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-1">الأحداث المرسلة</p>
-          <p className="text-sm font-bold text-gray-900">
-            {group.stats.eventsSent}
-          </p>
-        </div>
-        <div className="text-center border-r border-gray-100">
-          <p className="text-xs text-gray-500 mb-1">معدل الاستجابة</p>
-          <div className="flex items-center justify-center gap-1">
-            <TrendingUp className="w-3 h-3 text-blue-600" />
-            <p className="text-sm font-bold text-blue-600">
-              {group.stats.averageResponseRate}%
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Last Event */}
-      {group.stats.lastEventSent && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
-            آخر حدث:{" "}
-            {new Date(group.stats.lastEventSent).toLocaleDateString("ar-SA")}
-          </p>
-        </div>
-      )}
     </Card>
   );
 }

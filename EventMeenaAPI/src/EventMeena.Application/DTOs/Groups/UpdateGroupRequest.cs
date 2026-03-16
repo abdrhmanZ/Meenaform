@@ -9,6 +9,7 @@ public class UpdateGroupRequest
     public string? Description { get; set; }
     public string? Color { get; set; }
     public string? Icon { get; set; }
+    public List<Guid>? ContactIds { get; set; }
 }
 
 /// <summary>

@@ -26,3 +26,6 @@ pnpm-debug.log*
 # .NET build output
 EventMeenaAPI/**/bin/
 EventMeenaAPI/**/obj/
+
+# Secrets (do not commit)
+**/appsettings.Secrets.json

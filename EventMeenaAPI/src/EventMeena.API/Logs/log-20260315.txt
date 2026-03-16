@@ -1,0 +1,22 @@
+2026-03-15 17:49:23.265 +02:00 [INF] Email sent successfully to abdo3la42@gmail.com
+2026-03-15 17:54:36.998 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 17:54:37.196 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 17:54:37.230 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 17:57:23.818 +02:00 [INF] Email sent successfully to yakuzaclan42@gmail.com
+2026-03-15 19:49:11.864 +02:00 [INF] Email sent successfully to abd03la42@gmail.com
+2026-03-15 19:50:56.945 +02:00 [INF] Email sent successfully to abdo3la42@gmail.com
+2026-03-15 20:00:57.271 +02:00 [INF] Email sent successfully to yakuzaclan42@gmail.com
+2026-03-15 20:04:11.506 +02:00 [INF] Email sent successfully to abdo3la42@gmail.com
+2026-03-15 20:05:14.642 +02:00 [INF] Email sent successfully to yakuzaclan42@gmail.com
+2026-03-15 20:07:11.193 +02:00 [INF] Email sent successfully to yakuzaclan42@gmail.com
+2026-03-15 20:07:12.225 +02:00 [INF] Email sent successfully to clineforme@gmail.com
+2026-03-15 20:07:13.216 +02:00 [INF] Email sent successfully to abdo3la42@gmail.com
+2026-03-15 21:28:52.157 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:28:52.391 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:28:52.433 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:31:29.798 +02:00 [INF] Email sent successfully to clineforwe@gmail.com
+2026-03-15 21:55:43.256 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:55:44.057 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:55:44.480 +02:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-03-15 21:56:25.071 +02:00 [INF] Email sent successfully to abdo3la42@gmail.com
+2026-03-15 21:59:31.473 +02:00 [INF] Email sent successfully to bilalkhan01.bk@gmail.com
