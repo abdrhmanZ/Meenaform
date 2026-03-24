@@ -14,6 +14,21 @@ const nextConfig: NextConfig = {
         pathname: "/uploads/**",
       },
       {
+        protocol: "http",
+        hostname: "events.meena.sa",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "events.meena.sa",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/uploads/**",
+      },
+      {
         protocol: "https",
         hostname: "**",
         pathname: "/uploads/**",
@@ -23,3 +38,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+

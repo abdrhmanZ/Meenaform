@@ -31,7 +31,7 @@ import SignaturePad, { SignaturePadRef } from "./SignaturePad";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 // Set PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
 interface SignatureData {
   fieldId: string;

@@ -9,7 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DisplaySettings as DisplaySettingsType, DisplayType } from "@/types/component";
-import { Image, FileText, Link as LinkIcon, Upload, X } from "lucide-react";
+import { Image, FileText, Link as LinkIcon, Upload, X, Loader2 } from "lucide-react";
+import { uploadFileSimple } from "@/lib/api/services/filesService";
+import { getFullFileUrl } from "@/lib/api/services/filesService";
 
 interface DisplaySettingsProps {
   open: boolean;
@@ -46,6 +48,10 @@ export default function DisplaySettings({
   const [linkText, setLinkText] = useState(initialSettings?.linkText || "");
   const [openInNewTab, setOpenInNewTab] = useState(initialSettings?.openInNewTab ?? true);
 
+  // Upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const handleSave = () => {
     if (!label.trim()) {
       alert("يرجى إدخال عنوان العرض");
@@ -53,13 +59,13 @@ export default function DisplaySettings({
     }
 
     // Validation based on display type
-    if (displayType === "image" && !imageUrl && !imageFile) {
-      alert("يرجى رفع صورة أو إدخال رابط الصورة");
+    if (displayType === "image" && !imageUrl) {
+      alert("يرجى رفع صورة");
       return;
     }
 
-    if (displayType === "pdf" && !pdfUrl && !pdfFile) {
-      alert("يرجى رفع ملف PDF أو إدخال رابط الملف");
+    if (displayType === "pdf" && !pdfUrl) {
+      alert("يرجى رفع ملف PDF");
       return;
     }
 
@@ -75,12 +81,10 @@ export default function DisplaySettings({
       displayType,
       ...(displayType === "image" && {
         imageUrl,
-        imageFile,
         imageAlt: imageAlt.trim() || undefined,
       }),
       ...(displayType === "pdf" && {
         pdfUrl,
-        pdfFile,
         pdfFileName: pdfFileName.trim() || undefined,
         allowDownload,
       }),
@@ -95,44 +99,82 @@ export default function DisplaySettings({
     onClose();
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
         alert("يرجى اختيار ملف صورة صالح");
         return;
       }
+
       setImageFile(file);
-      // Create preview URL
-      const url = URL.createObjectURL(file);
-      setImageUrl(url);
+      setIsUploading(true);
+      setUploadError(null);
+
+      try {
+        // رفع الصورة إلى السيرفر والحصول على رابط حقيقي
+        const result = await uploadFileSimple(file, "image");
+        setImageUrl(result.fileUrl); // رابط حقيقي من السيرفر مثل /uploads/images/xxx.jpg
+      } catch (error) {
+        console.error("فشل رفع الصورة:", error);
+        setUploadError("فشل رفع الصورة. يرجى المحاولة مرة أخرى.");
+        setImageFile(undefined);
+        setImageUrl("");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
-  const handlePdfFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== "application/pdf") {
         alert("يرجى اختيار ملف PDF صالح");
         return;
       }
+
       setPdfFile(file);
       setPdfFileName(file.name);
-      // Create URL for the file
-      const url = URL.createObjectURL(file);
-      setPdfUrl(url);
+      setIsUploading(true);
+      setUploadError(null);
+
+      try {
+        // رفع ملف PDF إلى السيرفر والحصول على رابط حقيقي
+        const result = await uploadFileSimple(file, "pdf");
+        setPdfUrl(result.fileUrl); // رابط حقيقي من السيرفر مثل /uploads/pdfs/xxx.pdf
+      } catch (error) {
+        console.error("فشل رفع ملف PDF:", error);
+        setUploadError("فشل رفع ملف PDF. يرجى المحاولة مرة أخرى.");
+        setPdfFile(undefined);
+        setPdfUrl("");
+        setPdfFileName("");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
   const clearImageFile = () => {
     setImageFile(undefined);
     setImageUrl("");
+    setUploadError(null);
   };
 
   const clearPdfFile = () => {
     setPdfFile(undefined);
     setPdfUrl("");
     setPdfFileName("");
+    setUploadError(null);
+  };
+
+  // Helper to get display URL for preview (convert relative server path to full URL)
+  const getPreviewUrl = (url: string) => {
+    if (!url) return "";
+    // blob: URLs and http(s): URLs can be used directly
+    if (url.startsWith("blob:") || url.startsWith("http")) return url;
+    // Relative server paths need to be converted to full URLs
+    return getFullFileUrl(url);
   };
 
   return (
@@ -199,6 +241,13 @@ export default function DisplaySettings({
             />
           </div>
 
+          {/* Upload Error Message */}
+          {uploadError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {uploadError}
+            </div>
+          )}
+
           {/* Image Display Settings */}
           {displayType === "image" && (
             <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -217,8 +266,12 @@ export default function DisplaySettings({
                       accept="image/*"
                       onChange={handleImageFileChange}
                       className="flex-1"
+                      disabled={isUploading}
                     />
-                    {imageFile && (
+                    {isUploading && (
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    )}
+                    {imageFile && !isUploading && (
                       <Button
                         type="button"
                         size="sm"
@@ -229,14 +282,17 @@ export default function DisplaySettings({
                       </Button>
                     )}
                   </div>
+                  {isUploading && (
+                    <p className="text-xs text-blue-600">جاري رفع الصورة إلى السيرفر...</p>
+                  )}
                 </div>
 
-                {imageUrl && (
+                {imageUrl && !isUploading && (
                   <div className="space-y-2">
                     <Label>معاينة الصورة</Label>
                     <div className="border rounded-lg p-2 bg-white">
                       <img
-                        src={imageUrl}
+                        src={getPreviewUrl(imageUrl)}
                         alt={imageAlt || "Preview"}
                         className="max-w-full h-auto max-h-64 mx-auto rounded"
                       />
@@ -275,8 +331,12 @@ export default function DisplaySettings({
                       accept=".pdf,application/pdf"
                       onChange={handlePdfFileChange}
                       className="flex-1"
+                      disabled={isUploading}
                     />
-                    {pdfFile && (
+                    {isUploading && (
+                      <Loader2 className="w-5 h-5 animate-spin text-green-600" />
+                    )}
+                    {pdfFile && !isUploading && (
                       <Button
                         type="button"
                         size="sm"
@@ -287,9 +347,12 @@ export default function DisplaySettings({
                       </Button>
                     )}
                   </div>
+                  {isUploading && (
+                    <p className="text-xs text-green-600">جاري رفع الملف إلى السيرفر...</p>
+                  )}
                 </div>
 
-                {pdfFileName && (
+                {pdfFileName && !isUploading && (
                   <div className="p-3 bg-white border rounded-lg">
                     <div className="flex items-center gap-2 text-sm">
                       <FileText className="w-4 h-4 text-green-600" />
@@ -365,8 +428,15 @@ export default function DisplaySettings({
           <Button variant="outline" onClick={onClose}>
             إلغاء
           </Button>
-          <Button onClick={handleSave}>
-            حفظ
+          <Button onClick={handleSave} disabled={isUploading}>
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                جاري الرفع...
+              </>
+            ) : (
+              "حفظ"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

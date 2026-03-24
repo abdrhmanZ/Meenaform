@@ -318,28 +318,31 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
           return (
             <div key={idx} className="space-y-3">
               {/* File Info Card */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  {isImage ? (
-                    <ImageIcon className="w-5 h-5 text-blue-600" />
-                  ) : isVideo ? (
-                    <Video className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <Download className="w-5 h-5 text-blue-600" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{file.fileName || "ملف"}</p>
-                  <p className="text-sm text-gray-600">
-                    {file.fileSize ? (file.fileSize / 1024).toFixed(2) + " KB" : "حجم غير معروف"}
-                  </p>
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 flex-shrink-0">
+                    {isImage ? (
+                      <ImageIcon className="w-5 h-5 text-blue-600" />
+                    ) : isVideo ? (
+                      <Video className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <Download className="w-5 h-5 text-blue-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{file.fileName || "ملف"}</p>
+                    <p className="text-sm text-gray-600">
+                      {file.fileSize ? (file.fileSize / 1024).toFixed(2) + " KB" : "حجم غير معروف"}
+                    </p>
+                  </div>
                 </div>
                 {fileSource && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-3">
                     {/* Preview Button */}
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => handlePreview({ ...file, fileData: fileSource })}
                     >
                       <Eye className="w-4 h-4 ml-2" />
@@ -350,11 +353,11 @@ export default function ParticipantAnswers({ event, response }: ParticipantAnswe
                     <a
                       href={fileSource}
                       download={file.fileName || "file"}
-                      className="inline-flex"
+                      className="w-full sm:w-auto"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="w-full">
                         <Download className="w-4 h-4 ml-2" />
                         تحميل
                       </Button>

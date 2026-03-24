@@ -50,7 +50,8 @@ builder.Services.AddResponseCompression(options =>
         "text/json",
         "application/javascript",
         "text/css",
-        "text/html"
+        "text/html",
+        "application/pdf"
     });
 });
 
@@ -298,7 +299,15 @@ app.UseMiddleware<ExceptionMiddleware>();
 // app.UseHttpsRedirection();
 
 // Static Files for uploaded files (images, videos, pdfs, signatures)
-app.UseStaticFiles();
+// مع Cache-Control لتسريع تحميل الملفات في الزيارات المتكررة
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // كاش لمدة 7 أيام للملفات الثابتة (صور، فيديوهات، PDF، توقيعات)
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

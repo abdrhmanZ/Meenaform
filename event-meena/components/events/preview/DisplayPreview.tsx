@@ -3,7 +3,8 @@
 import { DisplaySettings } from "@/types/component";
 import { Label } from "@/components/ui/label";
 import { FileText, Download, ExternalLink } from "lucide-react";
-import Image from "next/image";
+// Using <img> instead of Next.js <Image> for user-uploaded content
+import { getFullFileUrl } from "@/lib/api/services/filesService";
 
 interface DisplayPreviewProps {
   settings: DisplaySettings;
@@ -16,22 +17,9 @@ export default function DisplayPreview({ settings }: DisplayPreviewProps) {
         if (settings.imageUrl) {
           return (
             <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden border border-gray-200">
-              <Image
-                src={settings.imageUrl}
-                alt={settings.imageAlt || settings.label}
-                width={800}
-                height={600}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          );
-        } else if (settings.imageFile) {
-          // عرض معاينة من File object
-          const imageUrl = URL.createObjectURL(settings.imageFile);
-          return (
-            <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden border border-gray-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imageUrl}
+                src={getFullFileUrl(settings.imageUrl)}
                 alt={settings.imageAlt || settings.label}
                 className="w-full h-auto object-contain"
               />
@@ -46,8 +34,8 @@ export default function DisplayPreview({ settings }: DisplayPreviewProps) {
         }
 
       case "pdf":
-        const pdfFileName = settings.pdfFileName || settings.pdfFile?.name || "ملف PDF";
-        const hasPdf = settings.pdfUrl || settings.pdfFile;
+        const pdfFileName = settings.pdfFileName || "ملف PDF";
+        const hasPdf = settings.pdfUrl;
 
         return (
           <div className="w-full max-w-2xl mx-auto">
@@ -122,4 +110,5 @@ export default function DisplayPreview({ settings }: DisplayPreviewProps) {
     </div>
   );
 }
+
 

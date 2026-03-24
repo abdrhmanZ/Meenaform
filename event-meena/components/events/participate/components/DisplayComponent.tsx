@@ -4,7 +4,9 @@ import { Component } from "@/types/component";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Download, FileText, Play } from "lucide-react";
-import Image from "next/image";
+// Using <img> instead of Next.js <Image> for user-uploaded content
+// Next.js Image blocks private IPs and requires domain whitelisting
+import { getFullFileUrl } from "@/lib/api/services/filesService";
 
 interface DisplayComponentProps {
   component: Component;
@@ -36,11 +38,10 @@ export default function DisplayComponent({ component }: DisplayComponentProps) {
           <div className="space-y-4">
             {imageSettings.imageUrl && (
               <div className="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                <Image
-                  src={imageSettings.imageUrl}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getFullFileUrl(imageSettings.imageUrl)}
                   alt={imageSettings.altText || imageSettings.imageAlt || "صورة"}
-                  width={800}
-                  height={600}
                   className="w-full h-auto object-contain"
                   style={{ maxHeight: "600px" }}
                 />
@@ -114,7 +115,7 @@ export default function DisplayComponent({ component }: DisplayComponentProps) {
                 <div className="flex gap-3">
                   <Button asChild className="flex-1">
                     <a
-                      href={pdfSettings.pdfUrl}
+                      href={getFullFileUrl(pdfSettings.pdfUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -123,7 +124,7 @@ export default function DisplayComponent({ component }: DisplayComponentProps) {
                     </a>
                   </Button>
                   <Button variant="outline" asChild className="flex-1">
-                    <a href={pdfSettings.pdfUrl} download>
+                    <a href={getFullFileUrl(pdfSettings.pdfUrl)} download>
                       <Download className="w-4 h-4 mr-2" />
                       تحميل
                     </a>

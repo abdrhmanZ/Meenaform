@@ -29,7 +29,7 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
 // Set PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
 interface SignatureDetailsProps {
   event: DocumentSigningEvent;
